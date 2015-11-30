@@ -104,12 +104,34 @@
                 <TextBlock Text="{Binding Details.C,Mode=OneWay,StringFormat='C = {0}' }"/>
                 <TextBlock Text="{Binding Details.V,Mode=OneWay,StringFormat='V = {0}' }"/>
                 <TextBlock Text="{Binding Details.Q,Mode=OneWay,StringFormat='Q = {0}' }"/>
+                <TextBlock Text="{Binding Details.GE,Mode=OneWay,StringFormat='GE = {0}' }"/>
+                <TextBlock Text="{Binding Details.T,Mode=OneWay,StringFormat='T = {0}' }"/>
+                <TextBlock Text="{Binding Details.IT,Mode=OneWay,StringFormat='IT = {0}' }"/>
                 <TextBlock Text="{Binding Details.ExceptionNum,Mode=OneWay,StringFormat='Exception: {0}',Converter={StaticResource ExceptionNumberConverter}}" />
             </StackPanel>
         </DataTemplate>
-        
+
+        <DataTemplate x:Key="FpscrRegisterDetailsViewModelTemplate">
+            <StackPanel Orientation="Vertical">
+                <TextBlock Text="{Binding Details.N,Mode=OneWay,StringFormat='N = {0}' }"/>
+                <TextBlock Text="{Binding Details.Z,Mode=OneWay,StringFormat='Z = {0}' }"/>
+                <TextBlock Text="{Binding Details.C,Mode=OneWay,StringFormat='C = {0}' }"/>
+                <TextBlock Text="{Binding Details.V,Mode=OneWay,StringFormat='V = {0}' }"/>
+                <TextBlock Text="{Binding Details.AHP,Mode=OneWay,StringFormat='AHP = {0}' }"/>
+                <TextBlock Text="{Binding Details.DN,Mode=OneWay,StringFormat='DN = {0}' }"/>
+                <TextBlock Text="{Binding Details.FZ,Mode=OneWay,StringFormat='FZ = {0}' }"/>
+                <TextBlock Text="{Binding Details.RMode,Mode=OneWay,StringFormat='IT = {0}' }"/>
+                <TextBlock Text="{Binding Details.IDC,Mode=OneWay,StringFormat='IDC = {0}' }" />
+                <TextBlock Text="{Binding Details.IXC,Mode=OneWay,StringFormat='IXC = {0}' }" />
+                <TextBlock Text="{Binding Details.UFC,Mode=OneWay,StringFormat='UFC = {0}' }" />
+                <TextBlock Text="{Binding Details.OFC,Mode=OneWay,StringFormat='OFC = {0}' }" />
+                <TextBlock Text="{Binding Details.DZC,Mode=OneWay,StringFormat='DZC = {0}' }" />
+                <TextBlock Text="{Binding Details.IOC,Mode=OneWay,StringFormat='IOC = {0}' }" />
+            </StackPanel>
+        </DataTemplate>
+
         <DataTemplate x:Key="DefaultRegisterDetailsTemplate">
-            <TextBlock x:Name="DefaultDetails" Text="{Binding Value, Converter={StaticResource BinaryValueConverter}}"/>
+            <TextBlock Text="{Binding Value, Converter={StaticResource BinaryValueConverter}}"/>
         </DataTemplate>
         
         <local:RegisterDetailsTemplateSelector x:Key="RegisterDetailsTemplateSelector"/>

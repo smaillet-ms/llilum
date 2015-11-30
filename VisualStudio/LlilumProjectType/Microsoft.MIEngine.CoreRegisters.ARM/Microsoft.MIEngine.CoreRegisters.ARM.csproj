@@ -63,6 +63,7 @@
     <Compile Include="Converters\IsNullValueConverter.cs" />
     <Compile Include="MIEngineResultsParsers.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ViewModel\FpscrRegisterDetailsViewModel.cs" />
     <Compile Include="VsPackage.cs" />
     <Compile Include="ViewModel\XpsrRegisterDetailsViewModel.cs" />
   </ItemGroup>

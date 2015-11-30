@@ -49,7 +49,22 @@ namespace Microsoft.MIEngine.CoreRegisters.ARM
             if( element == null || register == null )
                 return null;
 
-            var templateName = register.Name == "xpsr" ? "XpsrRegisterDetailsViewModelTemplate" : "DefaultRegisterDetailsTemplate";
+            string templateName;
+            switch( register.Name )
+            {
+            case "xpsr":
+                templateName = "XpsrRegisterDetailsViewModelTemplate";
+                break;
+
+            case "fpscr":
+                templateName = "FpscrRegisterDetailsViewModelTemplate";
+                break;
+
+            default:
+                templateName = "DefaultRegisterDetailsTemplate";
+                break;
+            }
+
             return element.FindResource( templateName ) as DataTemplate;
         }
     }
