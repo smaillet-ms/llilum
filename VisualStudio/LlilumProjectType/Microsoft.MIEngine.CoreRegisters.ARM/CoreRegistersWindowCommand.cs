@@ -22,7 +22,6 @@
 
 using System;
 using System.ComponentModel.Design;
-using System.Globalization;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio;
@@ -30,24 +29,16 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Microsoft.MIEngine.CoreRegisters.ARM
 {
-    /// <summary>
-    /// Command handler
-    /// </summary>
+    /// <summary>Visual Studio Command handler for the Registers Window</summary>
     internal sealed class CoreRegistersWindowCommand
     {
-        /// <summary>
-        /// Command ID.
-        /// </summary>
+        /// <summary>Command ID.</summary>
         public const int CommandId = 0x0100;
 
-        /// <summary>
-        /// Command menu group (command set GUID).
-        /// </summary>
+        /// <summary>Command menu group (command set GUID).</summary>
         public static readonly Guid CommandSet = new Guid( "8d5e2453-09b4-41bf-aa8d-7b6e1602a1c7" );
 
-        /// <summary>
-        /// VS Package that provides this command, not null.
-        /// </summary>
+        /// <summary>VS Package that provides this command, not null.</summary>
         private readonly Package package;
 
         private IVsMonitorSelection SelectionService;
@@ -95,28 +86,20 @@ namespace Microsoft.MIEngine.CoreRegisters.ARM
             cmd.Visible = active != 0;
         }
 
-        /// <summary>
-        /// Gets the instance of the command.
-        /// </summary>
+        /// <summary>Gets the singleton instance of the command.</summary>
         public static CoreRegistersWindowCommand Instance { get; private set; }
 
-        /// <summary>
-        /// Gets the service provider from the owner package.
-        /// </summary>
+        /// <summary>Gets the service provider from the owner package.</summary>
         private IServiceProvider ServiceProvider => package;
 
-        /// <summary>
-        /// Initializes the singleton instance of the command.
-        /// </summary>
+        /// <summary>Initializes the singleton instance of the command.</summary>
         /// <param name="package">Owner package, not null.</param>
         public static void Initialize( Package package )
         {
             Instance = new CoreRegistersWindowCommand( package );
         }
 
-        /// <summary>
-        /// Shows the tool window when the menu item is clicked.
-        /// </summary>
+        /// <summary>Shows the tool window when the menu item is clicked.</summary>
         /// <param name="sender">The event sender.</param>
         /// <param name="e">The event args.</param>
         [SuppressMessage( "Warning", "VSSDK002", Justification = "UI thread callback, always on UI" )]

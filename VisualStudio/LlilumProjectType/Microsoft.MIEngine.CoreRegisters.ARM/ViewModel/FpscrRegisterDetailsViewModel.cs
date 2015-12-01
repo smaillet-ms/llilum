@@ -30,8 +30,6 @@ namespace Microsoft.MIEngine.CoreRegisters.ARM
         public bool DZC { get; private set; }
         public bool IOC  { get; private set; }
 
-        public int ExceptionNum { get; private set; }
-
         private void RegValueChanged( object sender, PropertyChangedEventArgs e )
         {
             var val = Register.Value;
