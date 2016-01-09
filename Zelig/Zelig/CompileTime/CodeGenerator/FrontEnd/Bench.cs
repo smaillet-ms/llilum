@@ -2031,30 +2031,59 @@ namespace Microsoft.Zelig.FrontEnd
 
                 Console.WriteLine( "Optimizing LLVM Bitcode representation" );
 
-                var args = string.Format( "{0} {1} -o {2}"          ,
-                                        m_LlvmOptArgs ?? optSwitches,
-                                        filePrefix + ".bc"          ,
-                                        filePrefix + "_opt.bc" 
+                var args = string.Format( "{0} {1} -o {2}"
+                                        , m_LlvmOptArgs ?? optSwitches
+                                        , filePrefix + ".bc"
+                                        , filePrefix + "_opt.bc" 
                                         );
-                ShellExec( "opt.exe", args );
-                ShellExec( "llvm-dis.exe", filePrefix + "_opt.bc" );
+                if( 0 != ShellExec("opt.exe", args) )
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("LLVM Optimization pass failed!");
+                    Console.WriteLine("opt.exe {0}", args);
+                    Console.ResetColor();
+                    // fatal error there's nothing else meaningful to do.
+                }
+                else
+                {
+                    if( 0 != ShellExec("llvm-dis.exe", filePrefix + "_opt.bc") )
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("Generation of optimized LL file failed!");
+                        Console.WriteLine("llvm-dis.exe {0}", filePrefix + "_opt.bc");
+                        Console.ResetColor();
+                        // non-fatal error, the optimized LL file is useful to the user
+                        // but not required for any subsequent actions in the compilation.
+                    }
+                }
             }
 
-            if( m_fGenerateObj )
+            if( m_fDumpLLVMIR && m_fGenerateObj )
             {
-                var objFile     = filePrefix + "_opt.o";
+                var objFile = filePrefix + ( m_fSkipLlvmOptExe ? ".o" : "_opt.o" );
+                var bitCodeFile = filePrefix + (m_fSkipLlvmOptExe ? ".bc" : "_opt.bc");
                 var llcSwitches = BuildLlcArchitectureArgs(); 
 
                 Console.WriteLine( "Compiling LLVM Bitcode" );
-                var args = string.Format( "{0} -o={1} {2}"          ,
-                                        m_LlvmLlcArgs ?? llcSwitches,
-                                        objFile                     ,
-                                        filePrefix + "_opt.bc"         
+                var args = string.Format( "{0} -o={1} {2}"
+                                        , m_LlvmLlcArgs ?? llcSwitches
+                                        , objFile
+                                        , bitCodeFile
                                         );
 
-                ShellExec( "llc.exe", args );
-
-                DumpElfInformation( objFile, filePrefix );
+                if( 0 != ShellExec( "llc.exe", args ) )
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Object file code generation failed!");
+                    Console.WriteLine("llc.exe {0}", args);
+                    Console.ResetColor();
+                    // fatal error there's nothing else meaningful to do.
+                    return; 
+                }
+                else
+                {
+                    DumpElfInformation(objFile, filePrefix);
+                }
             }
 
             foreach( var raw in m_dumpRawImage )
@@ -2161,18 +2190,19 @@ namespace Microsoft.Zelig.FrontEnd
         private int ShellExec( string exe, string args )
         {
             var startInfo = new ProcessStartInfo( exe, args )
-            { CreateNoWindow = true
-            , UseShellExecute = false
-            , RedirectStandardError = true
-            , RedirectStandardOutput = true
-            };
+                            { CreateNoWindow = true
+                            , UseShellExecute = false
+                            , RedirectStandardError = true
+                            , RedirectStandardOutput = true
+                            };
 
             // for reasons unknown launching a process via ProcessStart doesn't actually inherit the
-            // STDOUT and STDERR so this has to capture the output from poth and then send it to the
+            // STDOUT and STDERR so this has to capture the output from both and then send it to the
             // console explicitly or the output from the process will just end up in the bit pool at
             // the bottom of the computer's chasis.
-            var proc = new Process( ) { StartInfo = startInfo };
+            var proc = new Process();
 
+            proc.StartInfo = startInfo;
             proc.ErrorDataReceived += ( s, e ) => { if( e.Data != null ) Console.Error.WriteLine( e.Data ); };
             proc.OutputDataReceived += ( s, e ) => { if( e.Data != null ) Console.WriteLine( e.Data ); };
             proc.Start( );

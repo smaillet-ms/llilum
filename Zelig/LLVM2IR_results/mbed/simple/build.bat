@@ -68,7 +68,15 @@ IF "%LLILUM_SKIP_OPT%" == "0" (
     @REM -"%LLVM_BIN%\opt" -O1 -globalopt -constmerge -adce -globaldce -time-passes Microsoft.Zelig.Test.mbed.Simple.bc -o Microsoft.Zelig.Test.mbed.Simple_opt.bc
 
     "%LLVM_BIN%\opt" -verify-debug-info -verify-dom-info -verify-each -verify-loop-info -verify-regalloc -verify-region-info Microsoft.Zelig.Test.mbed.Simple.bc -o Microsoft.Zelig.Test.mbed.Simple_verify.bc
+    if %ERRORLEVEL% NEQ 0 (
+        @ECHO ERRORLEVEL=%ERRORLEVEL%
+        goto :EXIT
+    )
     "%LLVM_BIN%\opt" -march=thumb -mcpu=%LLILUM_TARGET_CPU% -aa-eval -indvars -gvn -globaldce -adce -dce -tailcallopt -scalarrepl -mem2reg -ipconstprop -deadargelim -sccp -dce -ipsccp -dce -constmerge -scev-aa -targetlibinfo -irce -dse -dce -argpromotion -mem2reg -adce -mem2reg -globaldce -die -dce -dse -time-passes Microsoft.Zelig.Test.mbed.Simple.bc -o Microsoft.Zelig.Test.mbed.Simple_opt.bc
+    if %ERRORLEVEL% NEQ 0 (
+        @ECHO ERRORLEVEL=%ERRORLEVEL%
+        goto :EXIT
+    )
 ) ELSE (
     ECHO Skipping optimization passes...
     COPY Microsoft.Zelig.Test.mbed.Simple.bc Microsoft.Zelig.Test.mbed.Simple_opt.bc 1>NUL
@@ -81,12 +89,16 @@ IF "%LLILUM_SKIP_LLC%" == "0" (
 
     ECHO Compiling to ARM ^(optimization level %LLILUM_OPT_LEVEL%^)...
     "%LLVM_BIN%\llc" -O%LLILUM_OPT_LEVEL% -code-model=small -data-sections -relocation-model=pic -march=thumb -mcpu=%LLILUM_TARGET_CPU% -filetype=obj -mtriple=%LLILUM_TARGET_TRIPLE% -o=Microsoft.Zelig.Test.mbed.Simple_opt.o Microsoft.Zelig.Test.mbed.Simple_opt.bc
+    @ECHO ERRORLEVEL=%ERRORLEVEL%
     if %ERRORLEVEL% LSS 0 (
         @ECHO ERRORLEVEL=%ERRORLEVEL%
         goto :EXIT
     )
 ) ELSE (
     ECHO skipping LLC compilation...
+	IF NOT EXIST Microsoft.Zelig.Test.mbed.Simple_opt.o (
+		COPY Microsoft.Zelig.Test.mbed.Simple.o Microsoft.Zelig.Test.mbed.Simple_opt.o	
+	) 
 )
 
 ECHO Size Report...
@@ -97,10 +109,10 @@ ECHO Compiling and linking with mbed libs...
 
 IF "%LLILUM_SKIP_CLEANCLEAN%" == "0" (
 	ECHO Cleaning target '%TARGET%' for  intermediate and final artifacts...
-	make cleanclean TARGET=%TARGET% 
+	make --quiet cleanclean TARGET=%TARGET% 
 ) ELSE (
 	ECHO Cleaning target '%TARGET%' for final artifacts...
-	make clean TARGET=%TARGET% 
+	make --quiet clean TARGET=%TARGET% 
 )
 
 make DEBUG=%LLILUM_DEBUG% TARGET=%TARGET% HEAP_SIZE=%SIZE_OF_HEAP% STACK_SIZE=%SIZE_OF_STACK% USE_LWIP=%LWIP_USE%
