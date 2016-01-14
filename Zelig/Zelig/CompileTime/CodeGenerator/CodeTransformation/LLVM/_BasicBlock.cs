@@ -1,6 +1,6 @@
-﻿using Llvm.NET;
+﻿//#define ENABLE_DEBUG_INLINE_INFO
+using Llvm.NET;
 using Llvm.NET.DebugInfo;
-using Llvm.NET.Instructions;
 using Llvm.NET.Types;
 using Llvm.NET.Values;
 using Microsoft.Zelig.CodeGeneration.IR;
@@ -44,35 +44,38 @@ namespace Microsoft.Zelig.LLVM
             DebugInfo opDebugInfo = null;
             // start out assuming noinlining or inlined directly into method (e.g. 0 or 1 layer of inlining )
             DILocalScope inlinedFromScope = manager.GetScopeFor(method);
-            //DILocation inlinedAtLocation = null;
 
-            //if ( op != null )
-            //{
-            //    opDebugInfo = op.DebugInfo;
-            //    var annotation = op.GetAnnotation<InliningPathAnnotation>();
-            //    if( annotation != null && annotation.Path.Length > 0 )
-            //    {
-            //        inlinedFromScope = manager.GetScopeFor( annotation.Path[annotation.Path.Length - 1] );
-            //        // start with assumption of one layer inlining depth
-            //        DILocalScope inlinedAtScope = manager.GetScopeFor( method );
+#if ENABLE_DEBUG_INLINE_INFO
+            DILocation inlinedAtLocation = null;
 
-            //        // if inlining depth is greater than 1 get the source scope from the annotation
-            //        if ( annotation.Path.Length > 1 )
-            //            inlinedAtScope = manager.GetScopeFor( annotation.Path[ annotation.Path.Length - 2] );
+            if ( op != null )
+            {
+                opDebugInfo = op.DebugInfo;
+                var annotation = op.GetAnnotation<InliningPathAnnotation>();
+                if( annotation != null && annotation.Path.Length > 0 )
+                {
+                    inlinedFromScope = manager.GetScopeFor( annotation.Path[annotation.Path.Length - 1] );
+                    // start with assumption of one layer inlining depth
+                    DILocalScope inlinedAtScope = manager.GetScopeFor( method );
 
-            //        // last entry in the DebugInfoPath has the location of where the operator was inlined into
-            //        var debugInfo = annotation.DebugInfoPath[annotation.DebugInfoPath.Length - 1];
-            //        if( debugInfo != null )
-            //        {
-            //            inlinedAtLocation = new DILocation( LlvmBasicBlock.Context
-            //                                              , (uint)(debugInfo?.BeginLineNumber ?? 0)
-            //                                              , (uint)(debugInfo?.BeginColumn ?? 0)
-            //                                              , inlinedAtScope
-            //                                              );
-            //        }
-            //    }
-            //}
-            //else
+                    // if inlining depth is greater than 1 get the source scope from the annotation
+                    if ( annotation.Path.Length > 1 )
+                        inlinedAtScope = manager.GetScopeFor( annotation.Path[ annotation.Path.Length - 2] );
+
+                    // last entry in the DebugInfoPath has the location of where the operator was inlined into
+                    var debugInfo = annotation.DebugInfoPath[annotation.DebugInfoPath.Length - 1];
+                    if( debugInfo != null )
+                    {
+                        inlinedAtLocation = new DILocation( LlvmBasicBlock.Context
+                                                          , (uint)(debugInfo?.BeginLineNumber ?? 0)
+                                                          , (uint)(debugInfo?.BeginColumn ?? 0)
+                                                          , inlinedAtScope
+                                                          );
+                    }
+                }
+            }
+            else
+#endif
             {
                 // op is null so this is setting the location for the method itself before processing
                 // any of the method's operators. (reached from call to EnsureDebugInfo())
@@ -83,8 +86,15 @@ namespace Microsoft.Zelig.LLVM
                                           , (uint)(opDebugInfo?.BeginLineNumber ?? 0)
                                           , (uint)(opDebugInfo?.BeginColumn ?? 0)
                                           , inlinedFromScope
-                                          /*, inlinedAtLocation */
+#if ENABLE_DEBUG_INLINE_INFO
+                                          , inlinedAtLocation
+#endif
                                           );
+        }
+
+        public void InsertDbgValue(Value value, VariableExpression expression)
+        {
+            Module.DIBuilder.InsertDeclareValue( )
         }
 
 

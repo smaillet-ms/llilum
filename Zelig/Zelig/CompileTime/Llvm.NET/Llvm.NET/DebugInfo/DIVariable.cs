@@ -6,5 +6,7 @@
             : base( handle )
         {
         }
+
+        public DILocalScope Scope => FromHandle<DILocalScope>(NativeMethods.DIVariableGetScope(MetadataHandle));
     }
 }

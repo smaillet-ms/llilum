@@ -611,6 +611,9 @@ namespace Llvm.NET.DebugInfo
         [System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters", Justification = "Specific type required by interop call" )]
         public Value InsertDeclare( Value storage, DILocalVariable varInfo, DIExpression expr, DILocation location, BasicBlock insertAtEnd )
         {
+            if (location.Scope.SubProgram != varInfo.Scope.SubProgram)
+                throw new ArgumentException("Mismatched scopes for location and variable");
+
             var handle = NativeMethods.DIBuilderInsertDeclareAtEnd( BuilderHandle
                                                                   , storage.ValueHandle
                                                                   , varInfo.MetadataHandle

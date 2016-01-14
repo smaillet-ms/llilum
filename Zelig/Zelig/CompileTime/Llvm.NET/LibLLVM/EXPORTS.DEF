@@ -88,6 +88,8 @@ LLVMDITypeGetName
 LLVMMDNodeGetNumOperands
 LLVMMDNodeGetOperand
 LLVMGetOperandNode
+LLVMDILocalScopeGetSubProgram
+LLVMDIVariableGetScope
 
 ; AttributeSet manipulation
 LLVMGetAttributeSetSize

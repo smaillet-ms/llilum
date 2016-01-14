@@ -581,5 +581,10 @@ namespace Llvm.NET
         [DllImport( libraryPath, EntryPoint = "LLVMSetCallSiteAttributeSet", CallingConvention = System.Runtime.InteropServices.CallingConvention.Cdecl, BestFitMapping = false, ThrowOnUnmappableChar = true )]
         internal static extern void SetCallSiteAttributeSet( LLVMValueRef /*Call or Invoke*/ instruction, UIntPtr pAttributeSet );
 
+        [DllImport(libraryPath, EntryPoint = "LLVMDILocalScopeGetSubProgram", CallingConvention = System.Runtime.InteropServices.CallingConvention.Cdecl, BestFitMapping = false, ThrowOnUnmappableChar = true)]
+        internal static extern LLVMMetadataRef DILocalScopeGetSubProgram(LLVMMetadataRef /*DILocalScope*/ localScope);
+ 
+        [DllImport(libraryPath, EntryPoint = "LLVMDIVariableGetScope", CallingConvention = System.Runtime.InteropServices.CallingConvention.Cdecl, BestFitMapping = false, ThrowOnUnmappableChar = true)]
+        internal static extern /*DILocalScope*/ LLVMMetadataRef DIVariableGetScope(LLVMMetadataRef /*DIVariable*/ variable);
     }
 }

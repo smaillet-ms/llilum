@@ -671,4 +671,16 @@ extern "C"
         MDOperand const* pOperand = unwrap( operand );
         return wrap( pOperand->get( ) );
     }
+
+    /*DISubProgram*/ LLVMMetadataRef LLVMDILocalScopeGetSubProgram( LLVMMetadataRef /*DILocalScope*/ localScope )
+    {
+        DILocalScope* pScope = unwrap<DILocalScope>( localScope );
+        return wrap( pScope->getSubprogram( ) );
+    }
+
+    /*DIScope*/ LLVMMetadataRef LLVMDIVariableGetScope( LLVMMetadataRef /*DIVariable*/ variable )
+    {
+        DIVariable* pVariable = unwrap<DIVariable>( variable );
+        return wrap( pVariable->getScope( ) );
+    }
 }
