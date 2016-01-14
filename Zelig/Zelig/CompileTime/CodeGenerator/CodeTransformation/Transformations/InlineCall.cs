@@ -86,17 +86,20 @@ namespace Microsoft.Zelig.CodeGeneration.IR.Transformations
                 }
             }
 
-            internal void UpdateInliningPath( InliningPathAnnotation anOuter )
+            internal void UpdateInliningPath( InliningPathAnnotation anOuter, Debugging.DebugInfo callSiteDebugInfo )
             {
                 MethodRepresentation md = m_cfgSource.Method;
 
-                foreach(CallOperator call in m_inlinedCalls)
+                foreach (BasicBlock block in m_inlinedBasicBlocks)
                 {
-                    var anInner = call.GetAnnotation< InliningPathAnnotation >();
-                    var anNew   = InliningPathAnnotation.Create( this.TypeSystem, anOuter, md, anInner );
+                    foreach(Operator op in block.Operators )
+                    {
+                        var anInner = op.GetAnnotation<InliningPathAnnotation>();
+                        var anNew = InliningPathAnnotation.Create(this.TypeSystem, anOuter, md, callSiteDebugInfo, anInner);
 
-                    call.RemoveAnnotation( anInner );
-                    call.AddAnnotation   ( anNew   );
+                        op.RemoveAnnotation(anInner);
+                        op.AddAnnotation(anNew);
+                    }
                 }
             }
 
@@ -341,11 +344,11 @@ namespace Microsoft.Zelig.CodeGeneration.IR.Transformations
             //
             BasicBlock bbCloned = context.Clone( otherEntry );
 
-            newEntry.AddOperator( UnconditionalControlOperator.New( null, bbCloned ) );
+            newEntry.AddOperator( UnconditionalControlOperator.New(call.DebugInfo, bbCloned ) );
 
             context.ApplyProtection( current.ProtectedBy );
 
-            context.UpdateInliningPath( call.GetAnnotation< InliningPathAnnotation >() );
+            context.UpdateInliningPath( call.GetAnnotation< InliningPathAnnotation >(), call.DebugInfo );
 
             context.ResetBasicBlockAnnotations();
 
