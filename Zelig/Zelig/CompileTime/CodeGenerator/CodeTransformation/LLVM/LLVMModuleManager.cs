@@ -19,7 +19,8 @@ namespace Microsoft.Zelig.LLVM
     using TS = Microsoft.Zelig.Runtime.TypeSystem;
     using Llvm.NET.Values;
     using System.Diagnostics;
-
+    using Llvm.NET.DebugInfo;
+	
     public partial class LLVMModuleManager
     {
         private readonly ISectionNameProvider               m_SectionNameProvider;
@@ -88,6 +89,11 @@ namespace Microsoft.Zelig.LLVM
         public void TurnOffCompilationAndValidation( )
         {
             m_turnOffCompilationAndValidation = true;
+        }
+
+        public DISubProgram GetScopeFor( TS.MethodRepresentation md )
+        {
+            return GetOrInsertFunction(md)?.LlvmFunction?.DISubProgram;
         }
 
         public _Function GetOrInsertFunction( TS.MethodRepresentation md )

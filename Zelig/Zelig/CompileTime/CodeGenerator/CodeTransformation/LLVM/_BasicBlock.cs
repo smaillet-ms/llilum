@@ -1,6 +1,6 @@
-﻿using Llvm.NET;
+﻿//#define ENABLE_DEBUG_INLINE_INFO
+using Llvm.NET;
 using Llvm.NET.DebugInfo;
-using Llvm.NET.Instructions;
 using Llvm.NET.Types;
 using Llvm.NET.Values;
 using Microsoft.Zelig.CodeGeneration.IR;
@@ -41,39 +41,62 @@ namespace Microsoft.Zelig.LLVM
         {
             var func = manager.GetOrInsertFunction( method );
             Debug.Assert( Owner == func );
+            DebugInfo opDebugInfo = null;
+            // start out assuming noinlining or inlined directly into method (e.g. 0 or 1 layer of inlining )
+            DILocalScope inlinedFromScope = manager.GetScopeFor(method);
 
-            if( op != null )
+#if ENABLE_DEBUG_INLINE_INFO
+            DILocation inlinedAtLocation = null;
+
+            if ( op != null )
             {
-                SetDebugInfo( op.DebugInfo );
+                opDebugInfo = op.DebugInfo;
+                var annotation = op.GetAnnotation<InliningPathAnnotation>();
+                if( annotation != null && annotation.Path.Length > 0 )
+                {
+                    inlinedFromScope = manager.GetScopeFor( annotation.Path[annotation.Path.Length - 1] );
+                    // start with assumption of one layer inlining depth
+                    DILocalScope inlinedAtScope = manager.GetScopeFor( method );
+
+                    // if inlining depth is greater than 1 get the source scope from the annotation
+                    if ( annotation.Path.Length > 1 )
+                        inlinedAtScope = manager.GetScopeFor( annotation.Path[ annotation.Path.Length - 2] );
+
+                    // last entry in the DebugInfoPath has the location of where the operator was inlined into
+                    var debugInfo = annotation.DebugInfoPath[annotation.DebugInfoPath.Length - 1];
+                    if( debugInfo != null )
+                    {
+                        inlinedAtLocation = new DILocation( LlvmBasicBlock.Context
+                                                          , (uint)(debugInfo?.BeginLineNumber ?? 0)
+                                                          , (uint)(debugInfo?.BeginColumn ?? 0)
+                                                          , inlinedAtScope
+                                                          );
+                    }
+                }
             }
             else
+#endif
             {
-                SetDebugInfo( method.DebugInfo ?? manager.GetDebugInfoFor( method ) ); 
+                // op is null so this is setting the location for the method itself before processing
+                // any of the method's operators. (reached from call to EnsureDebugInfo())
+                opDebugInfo = method.DebugInfo ?? manager.GetDebugInfoFor(method);
             }
-        }
-
-        private void SetDebugInfo( DebugInfo debugInfo )
-        {
-            if( debugInfo == null )
-                return;
-
-            // don't allow inlined code to change the file scope of the location
-            // - that either requires a new DILexicalFileBlock (i.e. preprocessor
-            // macro expansion) or it requires the location to include the InlinedAt
-            // location scoping. In order to build the InlinedAt we'd need the
-            // DISubProgram corresponding to the method the operator is inlined
-            // from, which the Zelig inlining doesn't currently provide - all we get
-            // is the source and line data.
-            string curPath = Owner.LlvmFunction.DISubProgram.File?.Path ?? string.Empty;
-            if( 0 != string.Compare( debugInfo.SrcFileName, curPath, StringComparison.OrdinalIgnoreCase ) )
-                return;
 
             CurDILocation = new DILocation( LlvmBasicBlock.Context
-                                          , ( uint )( debugInfo?.BeginLineNumber ?? 0 )
-                                          , ( uint )( debugInfo?.BeginColumn ?? 0 )
-                                          , Owner.LlvmFunction.DISubProgram
+                                          , (uint)(opDebugInfo?.BeginLineNumber ?? 0)
+                                          , (uint)(opDebugInfo?.BeginColumn ?? 0)
+                                          , inlinedFromScope
+#if ENABLE_DEBUG_INLINE_INFO
+                                          , inlinedAtLocation
+#endif
                                           );
         }
+
+        public void InsertDbgValue(Value value, VariableExpression expression)
+        {
+            Module.DIBuilder.InsertDeclareValue( )
+        }
+
 
         /// <summary>
         /// Ensure that at least default debug info has been set for this block. If debug info has already been created,

@@ -697,10 +697,4 @@ extern "C"
         DILocalScope* pScope = unwrap<DILocalScope>( localScope );
         return wrap( pScope->getSubprogram( ) );
     }
-
-    /*DIScope*/ LLVMMetadataRef LLVMDIVariableGetScope( LLVMMetadataRef /*DIVariable*/ variable )
-    {
-        DIVariable* pVariable = unwrap<DIVariable>( variable );
-        return wrap( pVariable->getScope( ) );
-    }
 }

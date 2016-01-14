@@ -690,7 +690,7 @@ namespace Llvm.NET.DebugInfo
             return Value.FromHandle<Instruction>( handle );
         }
 
-        public Instruction InsertDeclare( Value storage, DILocalVariable varInfo, DILocation location, BasicBlock insertAtEnd )
+        public CallInstruction InsertDeclare( Value storage, DILocalVariable varInfo, DILocation location, BasicBlock insertAtEnd )
         {
             return InsertDeclare( storage, varInfo, CreateExpression( ), location, insertAtEnd );
         }
@@ -712,6 +712,9 @@ namespace Llvm.NET.DebugInfo
 
             if( insertAtEnd == null )
                 throw new ArgumentNullException( nameof( insertAtEnd ) );
+
+            if (location.Scope.SubProgram != varInfo.Scope.SubProgram)
+                throw new ArgumentException("Mismatched scopes for location and variable");
 
             var handle = NativeMethods.DIBuilderInsertDeclareAtEnd( BuilderHandle
                                                                   , storage.ValueHandle
