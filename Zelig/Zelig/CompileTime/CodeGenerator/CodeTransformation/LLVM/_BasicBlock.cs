@@ -37,13 +37,13 @@ namespace Microsoft.Zelig.LLVM
 #endif
         }
 
-        public void SetDebugInfo( LLVMModuleManager manager, MethodRepresentation method, Operator op )
+        public void SetDebugInfo( MethodRepresentation method, Operator op )
         {
-            var func = manager.GetOrInsertFunction( method );
+            var func = Module.Manager.GetOrInsertFunction( method );
             Debug.Assert( Owner == func );
             DebugInfo opDebugInfo = null;
             // start out assuming noinlining or inlined directly into method (e.g. 0 or 1 layer of inlining )
-            DILocalScope inlinedFromScope = manager.GetScopeFor(method);
+            DILocalScope inlinedFromScope = Module.Manager.GetScopeFor(method);
 
 #if ENABLE_DEBUG_INLINE_INFO
             DILocation inlinedAtLocation = null;
@@ -79,7 +79,7 @@ namespace Microsoft.Zelig.LLVM
             {
                 // op is null so this is setting the location for the method itself before processing
                 // any of the method's operators. (reached from call to EnsureDebugInfo())
-                opDebugInfo = method.DebugInfo ?? manager.GetDebugInfoFor(method);
+                opDebugInfo = method.DebugInfo ?? Module.Manager.GetDebugInfoFor(method);
             }
 
             CurDILocation = new DILocation( LlvmBasicBlock.Context
@@ -92,23 +92,17 @@ namespace Microsoft.Zelig.LLVM
                                           );
         }
 
-        public void InsertDbgValue(Value value, VariableExpression expression)
-        {
-            Module.DIBuilder.InsertDeclareValue( )
-        }
-
-
         /// <summary>
         /// Ensure that at least default debug info has been set for this block. If debug info has already been created,
         /// this is a no-op.
         /// </summary>
         /// <param name="manager">Owner of the LLVM module.</param>
         /// <param name="method">Representation of the method in which this block is defined.</param>
-        public void EnsureDebugInfo( LLVMModuleManager manager, MethodRepresentation method )
+        public void EnsureDebugInfo( MethodRepresentation method )
         {
             if( CurDILocation == null )
             {
-                SetDebugInfo( manager, method, null );
+                SetDebugInfo( method, null );
             }
 
             Debug.Assert( CurDILocation != null );

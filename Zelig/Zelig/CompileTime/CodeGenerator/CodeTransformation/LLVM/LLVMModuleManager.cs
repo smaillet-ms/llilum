@@ -98,7 +98,7 @@ namespace Microsoft.Zelig.LLVM
 
         public _Function GetOrInsertFunction( TS.MethodRepresentation md )
         {
-            _Function function = m_module.GetOrInsertFunction( this, md );
+            _Function function = m_module.GetOrInsertFunction( md );
             function.LlvmFunction.Section = m_SectionNameProvider.GetSectionNameFor( md );
             return function;
         }

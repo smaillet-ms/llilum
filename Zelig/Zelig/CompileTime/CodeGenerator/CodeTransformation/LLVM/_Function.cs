@@ -51,11 +51,11 @@ namespace Microsoft.Zelig.LLVM
     // on the Llvm.NET.Values.Function class. 
     public class _Function
     {
-        internal _Function(_Module module, LLVMModuleManager manager, TS.MethodRepresentation method)
+        internal _Function(_Module module, TS.MethodRepresentation method)
         {
             Module = module;
-            LlvmValue = CreateLLvmFunctionWithDebugInfo(module, manager, method);
-            LlvmValue.SetDebugType(manager.GetOrInsertType(method));
+            LlvmValue = CreateLLvmFunctionWithDebugInfo(module, method);
+            LlvmValue.SetDebugType(module.Manager.GetOrInsertType(method));
 
             var function = ( Function )LlvmValue;
             if( function.BasicBlocks.Count == 0 )
@@ -128,16 +128,16 @@ namespace Microsoft.Zelig.LLVM
         public Value GetLocalStackValue(
             TS.MethodRepresentation method,
             _BasicBlock block,
-            IR.VariableExpression val,
-            LLVMModuleManager manager)
+            IR.VariableExpression val
+            )
         {
-            block.EnsureDebugInfo( manager, method );
+            block.EnsureDebugInfo( method );
 
             bool hasDebugName = !string.IsNullOrWhiteSpace( val.DebugName?.Name );
 
             Value retVal = block.InsertAlloca(
                 hasDebugName ? val.DebugName.Name : val.ToString( ),
-                manager.GetOrInsertType( val.Type ) );
+                Module.Manager.GetOrInsertType( val.Type ) );
 
             // If the local had a valid symbolic name in the source code, generate debug info for it.
             if( !hasDebugName )
@@ -147,7 +147,7 @@ namespace Microsoft.Zelig.LLVM
 
             DILocalVariable localSym;
 
-            _Type valType = manager.GetOrInsertType( val.Type );
+            _Type valType = Module.Manager.GetOrInsertType( val.Type );
             var argExpression = val as IR.ArgumentVariableExpression;
             if( argExpression != null )
             {
@@ -203,11 +203,11 @@ namespace Microsoft.Zelig.LLVM
             LlvmFunction.Linkage = Linkage.Internal;
         }
 
-        private static Function CreateLLvmFunctionWithDebugInfo( _Module module, LLVMModuleManager manager, TS.MethodRepresentation method )
+        private static Function CreateLLvmFunctionWithDebugInfo( _Module module, TS.MethodRepresentation method )
         {
             string mangledName = LLVMModuleManager.GetFullMethodName( method );
-            _Type functionType = manager.GetOrInsertType( method );
-            Debugging.DebugInfo loc = manager.GetDebugInfoFor( method );
+            _Type functionType = module.Manager.GetOrInsertType( method );
+            Debugging.DebugInfo loc = module.Manager.GetDebugInfoFor( method );
             Debug.Assert( loc != null );
 
             var containingType = module.GetOrInsertType( method.OwnerType );
