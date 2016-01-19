@@ -290,125 +290,126 @@ namespace Microsoft.Zelig.Configuration.Environment.Abstractions.Architectures
                 return;
             }
 
-            // Load Debug metadata
-            // Miguel: (Hack to remove processor.cs epilogue/prologue debug data)
-            if( op.DebugInfo != null && !op.DebugInfo.SrcFileName.EndsWith( "ProcessorARMv7M.cs" ) )
+            m_basicBlock.BeginOperator( op );
+            try
             {
-                m_basicBlock.SetDebugInfo( m_method, op );
-            }
+                OutputStringInline(op.ToString());
 
-            OutputStringInline( op.ToString( ) );
-
-            //ALU
-            if( op is IR.AbstractBinaryOperator )
-            {
-                Translate_AbstractBinaryOperator( ( IR.AbstractBinaryOperator )op );
+                //ALU
+                if (op is IR.AbstractBinaryOperator)
+                {
+                    Translate_AbstractBinaryOperator((IR.AbstractBinaryOperator)op);
+                }
+                else if (op is IR.AbstractUnaryOperator)
+                {
+                    //Todo: Add unary "Finite" operation, which in fact is "CKfinite" from the checks.
+                    Translate_AbstractUnaryOperator((IR.AbstractUnaryOperator)op);
+                }
+                //Conversions
+                else if (op is IR.ConversionOperator)
+                {
+                    Translate_ConversionOperator((IR.ConversionOperator)op);
+                }
+                else if (op is IR.ConvertOperator)
+                {
+                    Translate_ConvertOperator((IR.ConvertOperator)op);
+                }
+                //Store-Load operators
+                else if (op is IR.SingleAssignmentOperator)
+                {
+                    Translate_SingleAssignmentOperator((IR.SingleAssignmentOperator)op);
+                }
+                else if (op is IR.AddressAssignmentOperator)
+                {
+                    Translate_AddressAssignmentOperator((IR.AddressAssignmentOperator)op);
+                }
+                else if (op is IR.InitialValueOperator)
+                {
+                    Translate_InitialValueOperator((IR.InitialValueOperator)op);
+                }
+                else if (op is IR.CompareAndSetOperator)
+                {
+                    Translate_CompareAndSetOperator((IR.CompareAndSetOperator)op);
+                }
+                else if (op is IR.LoadIndirectOperator)
+                {
+                    Translate_LoadIndirectOperator((IR.LoadIndirectOperator)op);
+                }
+                else if (op is IR.StoreIndirectOperator)
+                {
+                    Translate_StoreIndirectOperator((IR.StoreIndirectOperator)op);
+                }
+                else if (op is IR.StoreInstanceFieldOperator)
+                {
+                    Translate_StoreInstanceFieldOperator((IR.StoreInstanceFieldOperator)op);
+                }
+                else if (op is IR.LoadInstanceFieldOperator)
+                {
+                    Translate_LoadInstanceFieldOperator((IR.LoadInstanceFieldOperator)op);
+                }
+                else if (op is IR.LoadInstanceFieldAddressOperator)
+                {
+                    Translate_LoadInstanceFieldAddressOperator((IR.LoadInstanceFieldAddressOperator)op);
+                }
+                else if (op is IR.StoreElementOperator)
+                {
+                    Translate_StoreElementOperator((IR.StoreElementOperator)op);
+                }
+                else if (op is IR.LoadElementOperator)
+                {
+                    Translate_LoadElementOperator((IR.LoadElementOperator)op);
+                }
+                else if (op is IR.LoadElementAddressOperator)
+                {
+                    Translate_LoadElementAddressOperator((IR.LoadElementAddressOperator)op);
+                }
+                //Control flow operators
+                else if (op is IR.UnconditionalControlOperator)
+                {
+                    Translate_UnconditionalControlOperator((IR.UnconditionalControlOperator)op);
+                }
+                else if (op is IR.BinaryConditionalControlOperator)
+                {
+                    Translate_BinaryConditionalControlOperator((IR.BinaryConditionalControlOperator)op);
+                }
+                else if (op is IR.CompareConditionalControlOperator)
+                {
+                    Translate_CompareConditionalControlOperator((IR.CompareConditionalControlOperator)op);
+                }
+                else if (op is IR.MultiWayConditionalControlOperator)
+                {
+                    Translate_MultiWayConditionalControlOperator((IR.MultiWayConditionalControlOperator)op);
+                }
+                else if (op is IR.ReturnControlOperator)
+                {
+                    Translate_ReturnControlOperator((IR.ReturnControlOperator)op);
+                }
+                else if (op is IR.DeadControlOperator)
+                {
+                    Translate_DeadControlOperator((IR.DeadControlOperator)op);
+                }
+                //Calls
+                else if (op is IR.StaticCallOperator)
+                {
+                    Translate_StaticCallOperator((IR.StaticCallOperator)op);
+                }
+                else if (op is IR.InstanceCallOperator)
+                {
+                    Translate_InstanceCallOperator((IR.InstanceCallOperator)op);
+                }
+                else if (op is IR.IndirectCallOperator)
+                {
+                    Translate_IndirectCallOperator((IR.IndirectCallOperator)op);
+                }
+                //Other
+                else
+                {
+                    WarnUnimplemented(op.ToString());
+                }
             }
-            else if( op is IR.AbstractUnaryOperator )
+            finally
             {
-                //Todo: Add unary "Finite" operation, which in fact is "CKfinite" from the checks.
-                Translate_AbstractUnaryOperator( ( IR.AbstractUnaryOperator )op );
-            }
-            //Conversions
-            else if( op is IR.ConversionOperator )
-            {
-                Translate_ConversionOperator( ( IR.ConversionOperator )op );
-            }
-            else if( op is IR.ConvertOperator )
-            {
-                Translate_ConvertOperator( ( IR.ConvertOperator )op );
-            }
-            //Store-Load operators
-            else if( op is IR.SingleAssignmentOperator )
-            {
-                Translate_SingleAssignmentOperator( ( IR.SingleAssignmentOperator )op );
-            }
-            else if( op is IR.AddressAssignmentOperator )
-            {
-                Translate_AddressAssignmentOperator( ( IR.AddressAssignmentOperator )op );
-            }
-            else if( op is IR.InitialValueOperator )
-            {
-                Translate_InitialValueOperator( ( IR.InitialValueOperator )op );
-            }
-            else if( op is IR.CompareAndSetOperator )
-            {
-                Translate_CompareAndSetOperator( ( IR.CompareAndSetOperator )op );
-            }
-            else if( op is IR.LoadIndirectOperator )
-            {
-                Translate_LoadIndirectOperator( ( IR.LoadIndirectOperator )op );
-            }
-            else if( op is IR.StoreIndirectOperator )
-            {
-                Translate_StoreIndirectOperator( ( IR.StoreIndirectOperator )op );
-            }
-            else if( op is IR.StoreInstanceFieldOperator )
-            {
-                Translate_StoreInstanceFieldOperator( ( IR.StoreInstanceFieldOperator )op );
-            }
-            else if( op is IR.LoadInstanceFieldOperator )
-            {
-                Translate_LoadInstanceFieldOperator( ( IR.LoadInstanceFieldOperator )op );
-            }
-            else if( op is IR.LoadInstanceFieldAddressOperator )
-            {
-                Translate_LoadInstanceFieldAddressOperator( ( IR.LoadInstanceFieldAddressOperator )op );
-            }
-            else if( op is IR.StoreElementOperator )
-            {
-                Translate_StoreElementOperator( ( IR.StoreElementOperator )op );
-            }
-            else if( op is IR.LoadElementOperator )
-            {
-                Translate_LoadElementOperator( ( IR.LoadElementOperator )op );
-            }
-            else if( op is IR.LoadElementAddressOperator )
-            {
-                Translate_LoadElementAddressOperator( ( IR.LoadElementAddressOperator )op );
-            }
-            //Control flow operators
-            else if( op is IR.UnconditionalControlOperator )
-            {
-                Translate_UnconditionalControlOperator( ( IR.UnconditionalControlOperator )op );
-            }
-            else if( op is IR.BinaryConditionalControlOperator )
-            {
-                Translate_BinaryConditionalControlOperator( ( IR.BinaryConditionalControlOperator )op );
-            }
-            else if( op is IR.CompareConditionalControlOperator )
-            {
-                Translate_CompareConditionalControlOperator( ( IR.CompareConditionalControlOperator )op );
-            }
-            else if( op is IR.MultiWayConditionalControlOperator )
-            {
-                Translate_MultiWayConditionalControlOperator( ( IR.MultiWayConditionalControlOperator )op );
-            }
-            else if( op is IR.ReturnControlOperator )
-            {
-                Translate_ReturnControlOperator( ( IR.ReturnControlOperator )op );
-            }
-            else if( op is IR.DeadControlOperator )
-            {
-                Translate_DeadControlOperator( ( IR.DeadControlOperator )op );
-            }
-            //Calls
-            else if( op is IR.StaticCallOperator )
-            {
-                Translate_StaticCallOperator( ( IR.StaticCallOperator )op );
-            }
-            else if( op is IR.InstanceCallOperator )
-            {
-                Translate_InstanceCallOperator( ( IR.InstanceCallOperator )op );
-            }
-            else if( op is IR.IndirectCallOperator )
-            {
-                Translate_IndirectCallOperator( ( IR.IndirectCallOperator )op );
-            }
-            //Other
-            else
-            {
-                WarnUnimplemented( op.ToString( ) );
+                m_basicBlock.EndOperator();
             }
         }
 

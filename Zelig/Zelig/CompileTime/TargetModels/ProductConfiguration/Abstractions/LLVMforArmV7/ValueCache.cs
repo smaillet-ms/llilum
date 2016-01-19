@@ -53,6 +53,7 @@ namespace Microsoft.Zelig.Configuration.Environment.Abstractions.Architectures
 
         public void SetValueForBlock(_BasicBlock block, Value value)
         {
+            block.InsertDbgValueForVariable(value, Expression);
             m_loadedValues[block] = value;
         }
     }

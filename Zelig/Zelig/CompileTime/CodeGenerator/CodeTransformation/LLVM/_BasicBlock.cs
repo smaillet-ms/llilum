@@ -1,11 +1,9 @@
-﻿//#define ENABLE_DEBUG_INLINE_INFO
-using Llvm.NET;
+﻿using Llvm.NET;
 using Llvm.NET.DebugInfo;
 using Llvm.NET.Types;
 using Llvm.NET.Values;
 using Microsoft.Zelig.CodeGeneration.IR;
 using Microsoft.Zelig.Debugging;
-using Microsoft.Zelig.Runtime.TypeSystem;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -37,76 +35,25 @@ namespace Microsoft.Zelig.LLVM
 #endif
         }
 
-        public void SetDebugInfo( MethodRepresentation method, Operator op )
+        public void InsertDbgValueForVariable(Value value, VariableExpression expression)
         {
-            var func = Module.Manager.GetOrInsertFunction( method );
-            Debug.Assert( Owner == func );
-            DebugInfo opDebugInfo = null;
-            // start out assuming noinlining or inlined directly into method (e.g. 0 or 1 layer of inlining )
-            DILocalScope inlinedFromScope = Module.Manager.GetScopeFor(method);
+            if(expression.DebugName == null)
+                return;
 
-#if ENABLE_DEBUG_INLINE_INFO
-            DILocation inlinedAtLocation = null;
+            DebugInfo variableDebugInfo = Module.Manager.GetDebugInfoFor(expression.DebugName.Context);
+            if(variableDebugInfo == null)
+                return;
 
-            if ( op != null )
-            {
-                opDebugInfo = op.DebugInfo;
-                var annotation = op.GetAnnotation<InliningPathAnnotation>();
-                if( annotation != null && annotation.Path.Length > 0 )
-                {
-                    inlinedFromScope = manager.GetScopeFor( annotation.Path[annotation.Path.Length - 1] );
-                    // start with assumption of one layer inlining depth
-                    DILocalScope inlinedAtScope = manager.GetScopeFor( method );
+            DISubProgram variableScope = Module.Manager.GetScopeFor(expression.DebugName.Context);
+            // if the variable isn't inlined from some other scope, do nothing
+            // in the future this may be changed so that all variables are treated
+            // the same, whether inlined or not. 
+            if(Owner.LlvmFunction.DISubProgram == variableScope)
+                return;
 
-                    // if inlining depth is greater than 1 get the source scope from the annotation
-                    if ( annotation.Path.Length > 1 )
-                        inlinedAtScope = manager.GetScopeFor( annotation.Path[ annotation.Path.Length - 2] );
-
-                    // last entry in the DebugInfoPath has the location of where the operator was inlined into
-                    var debugInfo = annotation.DebugInfoPath[annotation.DebugInfoPath.Length - 1];
-                    if( debugInfo != null )
-                    {
-                        inlinedAtLocation = new DILocation( LlvmBasicBlock.Context
-                                                          , (uint)(debugInfo?.BeginLineNumber ?? 0)
-                                                          , (uint)(debugInfo?.BeginColumn ?? 0)
-                                                          , inlinedAtScope
-                                                          );
-                    }
-                }
-            }
-            else
-#endif
-            {
-                // op is null so this is setting the location for the method itself before processing
-                // any of the method's operators. (reached from call to EnsureDebugInfo())
-                opDebugInfo = method.DebugInfo ?? Module.Manager.GetDebugInfoFor(method);
-            }
-
-            CurDILocation = new DILocation( LlvmBasicBlock.Context
-                                          , (uint)(opDebugInfo?.BeginLineNumber ?? 0)
-                                          , (uint)(opDebugInfo?.BeginColumn ?? 0)
-                                          , inlinedFromScope
-#if ENABLE_DEBUG_INLINE_INFO
-                                          , inlinedAtLocation
-#endif
-                                          );
-        }
-
-        /// <summary>
-        /// Ensure that at least default debug info has been set for this block. If debug info has already been created,
-        /// this is a no-op.
-        /// </summary>
-        /// <param name="manager">Owner of the LLVM module.</param>
-        /// <param name="method">Representation of the method in which this block is defined.</param>
-        public void EnsureDebugInfo( MethodRepresentation method )
-        {
-            if( CurDILocation == null )
-            {
-                SetDebugInfo( method, null );
-            }
-
-            Debug.Assert( CurDILocation != null );
-            Debug.Assert( CurDISubProgram != null );
+            // TODO: find associated DILocalVariable for expression...
+            //Module.DIBuilder.InsertValue(value, 0, /*DILocalVaraible*/ null, CurDILocation, LlvmBasicBlock);
+            Debug.Assert( expression.m_identity >= 0 ); // bogus check to enable setting a breakpoint when this found an inlined var
         }
 
         public Value GetMethodArgument(int index, _Type type)
@@ -276,6 +223,56 @@ namespace Microsoft.Zelig.LLVM
             retVal.SetDebugLocation(CurDILocation);
             retVal.SetDebugType(left.GetDebugType());
             return retVal;
+        }
+
+        public void BeginOperator(Operator op)
+        {
+            if (op == null)
+                throw new ArgumentNullException(nameof(op));
+
+            var method = op.BasicBlock.Owner.Method;
+            var func = Module.Manager.GetOrInsertFunction(method);
+            Debug.Assert(Owner == func);
+            DebugInfo opDebugInfo = null;
+            // start out assuming noinlining or inlined directly into method (e.g. 0 or 1 layer of inlining )
+            DILocalScope fromScope = Module.Manager.GetScopeFor(method);
+            DILocation inlinedAtLocation = null;
+
+            opDebugInfo = op.DebugInfo;
+            var annotation = op.GetAnnotation<InliningPathAnnotation>();
+            if (annotation != null && annotation.Path.Length > 0)
+            {
+                fromScope = Module.Manager.GetScopeFor(annotation.Path[annotation.Path.Length - 1]);
+                // start with assumption of one layer inlining depth
+                DILocalScope inlinedAtScope = Module.Manager.GetScopeFor(method);
+
+                // if inlining depth is greater than 1 get the source scope from the annotation
+                if (annotation.Path.Length > 1)
+                    inlinedAtScope = Module.Manager.GetScopeFor(annotation.Path[annotation.Path.Length - 2]);
+
+                // last entry in the DebugInfoPath has the location of where the operator was inlined into
+                var debugInfo = annotation.DebugInfoPath[annotation.DebugInfoPath.Length - 1];
+                if (debugInfo != null)
+                {
+                    inlinedAtLocation = new DILocation(LlvmBasicBlock.Context
+                                                        , (uint)(debugInfo?.BeginLineNumber ?? 0)
+                                                        , (uint)(debugInfo?.BeginColumn ?? 0)
+                                                        , inlinedAtScope
+                                                        );
+                }
+            }
+
+            CurDILocation = new DILocation(LlvmBasicBlock.Context
+                                          , (uint)(opDebugInfo?.BeginLineNumber ?? 0)
+                                          , (uint)(opDebugInfo?.BeginColumn ?? 0)
+                                          , fromScope
+                                          , inlinedAtLocation
+                                          );
+        }
+
+        public void EndOperator()
+        {
+            CurDILocation = null;
         }
 
         enum UnaryOperator
@@ -728,9 +725,7 @@ namespace Microsoft.Zelig.LLVM
 
         internal BasicBlock LlvmBasicBlock { get; }
 
-        internal DISubProgram CurDISubProgram => CurDILocation?.Scope as DISubProgram;
-
-        internal DILocation CurDILocation;
+        internal DILocation CurDILocation = null;
 
         private readonly _Module Module;
         private readonly _Function Owner;

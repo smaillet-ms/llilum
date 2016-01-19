@@ -131,7 +131,7 @@ namespace Microsoft.Zelig.LLVM
             IR.VariableExpression val
             )
         {
-            block.EnsureDebugInfo( method );
+            //block.EnsureDebugInfo( method );
 
             bool hasDebugName = !string.IsNullOrWhiteSpace( val.DebugName?.Name );
 
@@ -189,6 +189,8 @@ namespace Microsoft.Zelig.LLVM
                 expr = Module.DIBuilder.CreateExpression( ExpressionOp.deref );
             }
 
+            // TODO: detect inlined variables and use InsertValue instead of InsertDeclare
+
             Module.DIBuilder.InsertDeclare( retVal, localSym, expr, block.CurDILocation, block.LlvmBasicBlock );
             return retVal;
         }
@@ -225,7 +227,9 @@ namespace Microsoft.Zelig.LLVM
                                                          , DebugInfoFlags.None // TODO: Map Zelig accesibility info etc... to flags
                                                          , false
                                                          );
+
             bool isStatic = method is TS.StaticMethodRepresentation;
+
             // "this" is always at index 0, for static functions the name for "this" is null
             int paramBase = isStatic ? 1 : 0;
             Debug.Assert( retVal != null && method.ArgumentNames.Length - paramBase == retVal.Parameters.Count );

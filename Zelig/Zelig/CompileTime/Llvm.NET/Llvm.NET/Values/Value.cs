@@ -378,8 +378,20 @@ namespace Llvm.NET.Values
         public static T SetDebugLocation<T>( this T value, DILocation location )
             where T : Value
         {
-            if( value is Instructions.Instruction && location != null )
+            if( value == null )
+                throw new ArgumentNullException( nameof( value ) );
+
+            if( location == null )
+                return value;
+
+            var instruction = value as Instructions.Instruction;
+            if( instruction != null )
+            {
+                if( !location.InlinedAtScope.SubProgram.Describes( instruction.ContainingBlock.ContainingFunction ) )
+                    throw new ArgumentException( "Location does not describe the function containing the provided instruction", nameof( location ) );
+
                 NativeMethods.SetDILocation( value.ValueHandle, location.MetadataHandle );
+            }
 
             return value;
         }
@@ -408,11 +420,20 @@ namespace Llvm.NET.Values
         /// before trying to add it.</para>
         /// </remarks>
         [System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters", Justification = "Specific type required by interop call" )]
-        public static T SetDebugLocation<T>( this T value, uint line, uint column, DebugInfo.DIScope scope )
+        public static T SetDebugLocation<T>( this T value, uint line, uint column, DebugInfo.DILocalScope scope )
             where T : Value
         {
-            if( value is Instructions.Instruction && scope != null )
+            if( scope == null )
+                return value;
+
+            var instruction = value as Instructions.Instruction;
+            if( instruction != null )
+            {
+                if( !scope.SubProgram.Describes( instruction.ContainingBlock.ContainingFunction ) )
+                    throw new ArgumentException( "scope does not describe the function containing the provided instruction", nameof( scope ) );
+
                 NativeMethods.SetDebugLoc( value.ValueHandle, line, column, scope.MetadataHandle );
+            }
 
             return value;
         }
