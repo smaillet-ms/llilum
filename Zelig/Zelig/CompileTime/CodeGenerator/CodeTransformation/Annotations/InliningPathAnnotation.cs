@@ -8,7 +8,7 @@ namespace Microsoft.Zelig.CodeGeneration.IR
     using System.Collections.Generic;
 
     using Microsoft.Zelig.Runtime.TypeSystem;
-
+    using System.Diagnostics;
 
     public sealed class InliningPathAnnotation : Annotation
     {
@@ -25,6 +25,7 @@ namespace Microsoft.Zelig.CodeGeneration.IR
 
         private InliningPathAnnotation( MethodRepresentation[] path, Debugging.DebugInfo[] debugInfoPath )
         {
+            Debug.Assert(path.Length == debugInfoPath.Length);
             m_path = path;
             m_DebugInfo = debugInfoPath;
         }
@@ -35,6 +36,9 @@ namespace Microsoft.Zelig.CodeGeneration.IR
                                                      Debugging.DebugInfo    debugInfo,
                                                      InliningPathAnnotation anInner )
         {
+            Debug.Assert(anOuter == null || anOuter.DebugInfoPath.Length == anOuter.Path.Length);
+            Debug.Assert(anInner == null || anInner.DebugInfoPath.Length == anInner.Path.Length);
+
             var pathOuter = anOuter != null ? anOuter.m_path : MethodRepresentation.SharedEmptyArray;
             var pathInner = anInner != null ? anInner.m_path : MethodRepresentation.SharedEmptyArray;
             var path = ArrayUtility.AppendToNotNullArray( pathOuter, md );
@@ -119,12 +123,14 @@ namespace Microsoft.Zelig.CodeGeneration.IR
                     if(ts.ReachabilitySet.IsProhibited( md ))
                     {
                         m_path = ArrayUtility.RemoveAtPositionFromNotNullArray( m_path, i );
+                        m_DebugInfo = ArrayUtility.RemoveAtPositionFromNotNullArray(m_DebugInfo, i);
                     }
                 }
             }
             else
             {
                 context.Transform( ref m_path );
+                // TODO: Handle m_DebugInfo - there is no Transform method for DebugInfo[] so this info isn't serialized, etc...
             }
 
             context.Pop();
@@ -182,6 +188,26 @@ namespace Microsoft.Zelig.CodeGeneration.IR
             }
 
             sb.Append( ">" );
+
+            sb.Append("<DebugInfo Path:");
+
+            fFirst = true;
+
+            foreach (var debugInfo in m_DebugInfo )
+            {
+                if (!fFirst)
+                {
+                    sb.AppendLine();
+                }
+                else
+                {
+                    fFirst = false;
+                }
+
+                sb.AppendFormat(" {0}", m_DebugInfo );
+            }
+
+            sb.Append(">");
 
             return sb.ToString();
         }

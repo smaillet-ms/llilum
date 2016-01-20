@@ -27,7 +27,7 @@ namespace Microsoft.Zelig.Configuration.Environment.Abstractions.Architectures
                 return llvmBlock;
             }
 
-            llvmBlock = m_function.GetOrInsertBasicBlock( block.ToShortString( ) );
+            llvmBlock = m_function.GetOrInsertBasicBlock( block );
             m_blocks.Add( block, llvmBlock );
             return llvmBlock;
         }

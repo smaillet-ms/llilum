@@ -1,9 +1,7 @@
 ﻿using Llvm.NET;
 using Llvm.NET.DebugInfo;
 using Llvm.NET.Values;
-using System;
 using System.Diagnostics;
-using Llvm.NET.Types;
 using IR = Microsoft.Zelig.CodeGeneration.IR;
 using TS = Microsoft.Zelig.Runtime.TypeSystem;
 
@@ -63,8 +61,7 @@ namespace Microsoft.Zelig.LLVM
 
             if (method.HasBuildTimeFlag(TS.MethodRepresentation.BuildTimeAttributes.Inline))
             {
-                // BUGBUG: Should this be AlwaysInline?
-                AddAttribute(FunctionAttribute.InlineHint);
+                AddAttribute(FunctionAttribute.AlwaysInline);
             }
 
             if (method.HasBuildTimeFlag(TS.MethodRepresentation.BuildTimeAttributes.NoInline))
@@ -120,9 +117,10 @@ namespace Microsoft.Zelig.LLVM
             LlvmFunction.RemoveAttribute((AttributeKind)kind);
         }
 
-        public _BasicBlock GetOrInsertBasicBlock(string blockName)
+        public _BasicBlock GetOrInsertBasicBlock(IR.BasicBlock block)
         {
-            return new _BasicBlock(this, LlvmFunction.FindOrCreateNamedBlock(blockName));
+            var retVal = new _BasicBlock(this, block);
+            return retVal;
         }
 
         public Value GetLocalStackValue(
@@ -131,20 +129,25 @@ namespace Microsoft.Zelig.LLVM
             IR.VariableExpression val
             )
         {
-            //block.EnsureDebugInfo( method );
-
             bool hasDebugName = !string.IsNullOrWhiteSpace( val.DebugName?.Name );
 
             Value retVal = block.InsertAlloca(
                 hasDebugName ? val.DebugName.Name : val.ToString( ),
                 Module.Manager.GetOrInsertType( val.Type ) );
 
-            // If the local had a valid symbolic name in the source code, generate debug info for it.
+            // If the local did not have a valid symbolic name in the source code
+            // then don't generate LLVM debug info either
             if( !hasDebugName )
             {
                 return retVal;
             }
 
+            // use the context from the DebugName as that reflects the true scope
+            // when the variable is the result of inlining a method
+            var debugInfo = Module.Manager.GetDebugInfoFor(val.DebugName.Context);
+            var diScope = Module.Manager.GetScopeFor(val.DebugName.Context);
+
+            var diLocation = debugInfo.AsDILocation( diScope );
             DILocalVariable localSym;
 
             _Type valType = Module.Manager.GetOrInsertType( val.Type );
@@ -159,26 +162,25 @@ namespace Microsoft.Zelig.LLVM
                     index--;
                 }
 
-                localSym = Module.DIBuilder.CreateArgument( block.CurDISubProgram
+                localSym = Module.DIBuilder.CreateArgument( diScope
                                                           , val.DebugName.Name
-                                                          , block.CurDILocation.Scope.File
-                                                          , block.CurDILocation.Line
+                                                          , diLocation.Scope.File
+                                                          , diLocation.Line
                                                           , valType.DIType
                                                           , true
-                                                          , 0
+                                                          , DebugInfoFlags.None
                                                           , index
                                                           );
             }
             else
             {
-                localSym = Module.DIBuilder.CreateLocalVariable( block.CurDISubProgram
+                localSym = Module.DIBuilder.CreateLocalVariable( diScope
                                                                , val.DebugName.Name
-                                                               , block.CurDILocation.Scope.File
-                                                               , block.CurDILocation.Line 
+                                                               , diLocation.Scope.File
+                                                               , diLocation.Line 
                                                                , valType.DIType
                                                                , true
-                                                               , 0
-                                                               , 0
+                                                               , DebugInfoFlags.None
                                                                );
             }
 
@@ -189,9 +191,15 @@ namespace Microsoft.Zelig.LLVM
                 expr = Module.DIBuilder.CreateExpression( ExpressionOp.deref );
             }
 
-            // TODO: detect inlined variables and use InsertValue instead of InsertDeclare
-
-            Module.DIBuilder.InsertDeclare( retVal, localSym, expr, block.CurDILocation, block.LlvmBasicBlock );
+            // detect inlined variables and use InsertValue instead of InsertDeclare
+            if (val.DebugName.Context != method)
+            {
+                Module.DIBuilder.InsertValue(retVal, 0, localSym, expr, diLocation, block.LlvmBasicBlock);
+            }
+            else
+            {
+                Module.DIBuilder.InsertDeclare(retVal, localSym, expr, diLocation, block.LlvmBasicBlock);
+            }
             return retVal;
         }
 

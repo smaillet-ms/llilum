@@ -305,10 +305,9 @@ namespace Llvm.NET.DebugInfo
                                                   , DIType type
                                                   , bool alwaysPreserve
                                                   , DebugInfoFlags debugFlags
-                                                  , uint argNo
                                                   )
         {
-            return CreateLocalVariable( Tag.AutoVariable, scope, name, file, line, type, alwaysPreserve, ( uint )debugFlags, argNo );
+            return CreateLocalVariable( Tag.AutoVariable, scope, name, file, line, type, alwaysPreserve, ( uint )debugFlags, 0 );
         }
 
         /// <summary>Creates an argument for a function as a <see cref="DILocalVariable"/></summary>

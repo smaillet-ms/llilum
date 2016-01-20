@@ -2,28 +2,29 @@
 using Llvm.NET.DebugInfo;
 using Llvm.NET.Types;
 using Llvm.NET.Values;
-using Microsoft.Zelig.CodeGeneration.IR;
 using Microsoft.Zelig.Debugging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using IR = Microsoft.Zelig.CodeGeneration.IR;
 
 using BasicBlock = Llvm.NET.Values.BasicBlock;
+using Microsoft.Zelig.Runtime.TypeSystem;
 
 namespace Microsoft.Zelig.LLVM
 {
     public class _BasicBlock
     {
-        internal _BasicBlock( _Function owner, BasicBlock block )
+        internal _BasicBlock(_Function owner, IR.BasicBlock block)
         {
             Owner = owner;
             Module = Owner.Module;
-            LlvmBasicBlock = block;
-            IrBuilder = new InstructionBuilder( block );
+            LlvmBasicBlock = owner.LlvmFunction.FindOrCreateNamedBlock(block.ToShortString());
+            IrBuilder = new InstructionBuilder(LlvmBasicBlock);
         }
 
-        public void InsertASMString( string ASM )
+        public void InsertASMString(string ASM)
         {
 #if DUMP_INLINED_COMMENTS_AS_ASM_CALLS
             // unported C++ code InlineAsm not yet supported in Llvm.NET (and not really needed here anyway)
@@ -35,25 +36,25 @@ namespace Microsoft.Zelig.LLVM
 #endif
         }
 
-        public void InsertDbgValueForVariable(Value value, VariableExpression expression)
+        public void InsertDbgValueForVariable(Value value, IR.VariableExpression expression)
         {
-            if(expression.DebugName == null)
+            if (expression.DebugName == null)
                 return;
 
             DebugInfo variableDebugInfo = Module.Manager.GetDebugInfoFor(expression.DebugName.Context);
-            if(variableDebugInfo == null)
+            if (variableDebugInfo == null)
                 return;
 
             DISubProgram variableScope = Module.Manager.GetScopeFor(expression.DebugName.Context);
             // if the variable isn't inlined from some other scope, do nothing
             // in the future this may be changed so that all variables are treated
             // the same, whether inlined or not. 
-            if(Owner.LlvmFunction.DISubProgram == variableScope)
+            if (Owner.LlvmFunction.DISubProgram == variableScope)
                 return;
 
             // TODO: find associated DILocalVariable for expression...
             //Module.DIBuilder.InsertValue(value, 0, /*DILocalVaraible*/ null, CurDILocation, LlvmBasicBlock);
-            Debug.Assert( expression.m_identity >= 0 ); // bogus check to enable setting a breakpoint when this found an inlined var
+            Debug.Assert(expression.m_identity >= 0); // bogus check to enable setting a breakpoint when this found an inlined var
         }
 
         public Value GetMethodArgument(int index, _Type type)
@@ -87,7 +88,7 @@ namespace Microsoft.Zelig.LLVM
             {
                 Console.WriteLine("For \"Ptr must be a pointer to Val type!\" Assert.");
                 Console.WriteLine("getOperand(0).getType()");
-                Console.WriteLine(src.NativeType );
+                Console.WriteLine(src.NativeType);
                 Console.WriteLine("");
                 Console.WriteLine("cast<IPointerType>(getOperand(1).getType()).getElementType()");
                 Console.WriteLine(ptrType.ElementType);
@@ -138,7 +139,7 @@ namespace Microsoft.Zelig.LLVM
             SHR = 9,
         };
 
-        public Value InsertBinaryOp( int op, Value left, Value right, bool isSigned )
+        public Value InsertBinaryOp(int op, Value left, Value right, bool isSigned)
         {
             var binOp = (BinaryOperator)op;
             var bldr = IrBuilder;
@@ -148,71 +149,71 @@ namespace Microsoft.Zelig.LLVM
             {
                 switch (binOp)
                 {
-                case BinaryOperator.ADD:
-                    retVal = bldr.Add(left, right);
-                    break;
-                case BinaryOperator.SUB:
-                    retVal = bldr.Sub(left, right);
-                    break;
-                case BinaryOperator.MUL:
-                    retVal = bldr.Mul(left, right);
-                    break;
-                case BinaryOperator.DIV:
-                    if (isSigned)
-                        retVal = bldr.SDiv(left, right);
-                    else
-                        retVal = bldr.UDiv(left, right);
-                    break;
-                case BinaryOperator.REM:
-                    if (isSigned)
-                        retVal = bldr.SRem(left, right);
-                    else
-                        retVal = bldr.URem(left, right);
-                    break;
-                case BinaryOperator.AND:
-                    retVal = bldr.And(left, right);
-                    break;
-                case BinaryOperator.OR:
-                    retVal = bldr.Or(left, right);
-                    break;
-                case BinaryOperator.XOR:
-                    retVal = bldr.Xor(left, right);
-                    break;
-                case BinaryOperator.SHL:
-                    retVal = bldr.ShiftLeft(left, right);
-                    break;
-                case BinaryOperator.SHR:
-                    if (isSigned)
-                    {
-                        retVal = bldr.ArithmeticShiftRight(left, right);
-                    }
-                    else
-                    {
-                        retVal = bldr.LogicalShiftRight(left, right);
-                    }
-                    break;
-                default:
-                    throw new NotSupportedException($"Parameters combination not supported for Binary Operator: {binOp}");
+                    case BinaryOperator.ADD:
+                        retVal = bldr.Add(left, right);
+                        break;
+                    case BinaryOperator.SUB:
+                        retVal = bldr.Sub(left, right);
+                        break;
+                    case BinaryOperator.MUL:
+                        retVal = bldr.Mul(left, right);
+                        break;
+                    case BinaryOperator.DIV:
+                        if (isSigned)
+                            retVal = bldr.SDiv(left, right);
+                        else
+                            retVal = bldr.UDiv(left, right);
+                        break;
+                    case BinaryOperator.REM:
+                        if (isSigned)
+                            retVal = bldr.SRem(left, right);
+                        else
+                            retVal = bldr.URem(left, right);
+                        break;
+                    case BinaryOperator.AND:
+                        retVal = bldr.And(left, right);
+                        break;
+                    case BinaryOperator.OR:
+                        retVal = bldr.Or(left, right);
+                        break;
+                    case BinaryOperator.XOR:
+                        retVal = bldr.Xor(left, right);
+                        break;
+                    case BinaryOperator.SHL:
+                        retVal = bldr.ShiftLeft(left, right);
+                        break;
+                    case BinaryOperator.SHR:
+                        if (isSigned)
+                        {
+                            retVal = bldr.ArithmeticShiftRight(left, right);
+                        }
+                        else
+                        {
+                            retVal = bldr.LogicalShiftRight(left, right);
+                        }
+                        break;
+                    default:
+                        throw new NotSupportedException($"Parameters combination not supported for Binary Operator: {binOp}");
                 }
             }
             else if (left.NativeType.IsFloatingPoint && right.NativeType.IsFloatingPoint)
             {
                 switch (binOp)
                 {
-                case BinaryOperator.ADD:
-                    retVal = bldr.FAdd(left, right);
-                    break;
-                case BinaryOperator.SUB:
-                    retVal = bldr.FSub(left, right);
-                    break;
-                case BinaryOperator.MUL:
-                    retVal = bldr.FMul(left, right);
-                    break;
-                case BinaryOperator.DIV:
-                    retVal = bldr.FDiv(left, right);
-                    break;
-                default:
-                    throw new NotSupportedException($"Parameters combination not supported for Binary Operator: {binOp}");
+                    case BinaryOperator.ADD:
+                        retVal = bldr.FAdd(left, right);
+                        break;
+                    case BinaryOperator.SUB:
+                        retVal = bldr.FSub(left, right);
+                        break;
+                    case BinaryOperator.MUL:
+                        retVal = bldr.FMul(left, right);
+                        break;
+                    case BinaryOperator.DIV:
+                        retVal = bldr.FDiv(left, right);
+                        break;
+                    default:
+                        throw new NotSupportedException($"Parameters combination not supported for Binary Operator: {binOp}");
                 }
             }
             else
@@ -225,49 +226,13 @@ namespace Microsoft.Zelig.LLVM
             return retVal;
         }
 
-        public void BeginOperator(Operator op)
+        public void BeginOperator(IR.Operator op)
         {
             if (op == null)
                 throw new ArgumentNullException(nameof(op));
 
-            var method = op.BasicBlock.Owner.Method;
-            var func = Module.Manager.GetOrInsertFunction(method);
-            Debug.Assert(Owner == func);
-            DebugInfo opDebugInfo = null;
-            // start out assuming noinlining or inlined directly into method (e.g. 0 or 1 layer of inlining )
-            DILocalScope fromScope = Module.Manager.GetScopeFor(method);
-            DILocation inlinedAtLocation = null;
-
-            opDebugInfo = op.DebugInfo;
-            var annotation = op.GetAnnotation<InliningPathAnnotation>();
-            if (annotation != null && annotation.Path.Length > 0)
-            {
-                fromScope = Module.Manager.GetScopeFor(annotation.Path[annotation.Path.Length - 1]);
-                // start with assumption of one layer inlining depth
-                DILocalScope inlinedAtScope = Module.Manager.GetScopeFor(method);
-
-                // if inlining depth is greater than 1 get the source scope from the annotation
-                if (annotation.Path.Length > 1)
-                    inlinedAtScope = Module.Manager.GetScopeFor(annotation.Path[annotation.Path.Length - 2]);
-
-                // last entry in the DebugInfoPath has the location of where the operator was inlined into
-                var debugInfo = annotation.DebugInfoPath[annotation.DebugInfoPath.Length - 1];
-                if (debugInfo != null)
-                {
-                    inlinedAtLocation = new DILocation(LlvmBasicBlock.Context
-                                                        , (uint)(debugInfo?.BeginLineNumber ?? 0)
-                                                        , (uint)(debugInfo?.BeginColumn ?? 0)
-                                                        , inlinedAtScope
-                                                        );
-                }
-            }
-
-            CurDILocation = new DILocation(LlvmBasicBlock.Context
-                                          , (uint)(opDebugInfo?.BeginLineNumber ?? 0)
-                                          , (uint)(opDebugInfo?.BeginColumn ?? 0)
-                                          , fromScope
-                                          , inlinedAtLocation
-                                          );
+            var annotation = op.GetAnnotation<IR.InliningPathAnnotation>();
+            CurDILocation = annotation.GetDebugLocationFor( Module, Owner.LlvmFunction, op.DebugInfo );
         }
 
         public void EndOperator()
@@ -282,7 +247,7 @@ namespace Microsoft.Zelig.LLVM
             FINITE = 2,
         };
 
-        public Value InsertUnaryOp( int op, Value val, bool isSigned )
+        public Value InsertUnaryOp(int op, Value val, bool isSigned)
         {
             var unOp = (UnaryOperator)op;
 
@@ -290,22 +255,22 @@ namespace Microsoft.Zelig.LLVM
 
             Value retVal = val;
 
-            switch( unOp )
+            switch (unOp)
             {
-            case UnaryOperator.NEG:
-                if (val.NativeType.IsInteger)
-                {
-                    retVal = IrBuilder.Neg( retVal );
-                }
-                else
-                {
-                    retVal = IrBuilder.FNeg( retVal );
-                }
-                break;
+                case UnaryOperator.NEG:
+                    if (val.NativeType.IsInteger)
+                    {
+                        retVal = IrBuilder.Neg(retVal);
+                    }
+                    else
+                    {
+                        retVal = IrBuilder.FNeg(retVal);
+                    }
+                    break;
 
-            case UnaryOperator.NOT:
-                retVal = IrBuilder.Not( retVal );
-                break;
+                case UnaryOperator.NOT:
+                    retVal = IrBuilder.Not(retVal);
+                    break;
             }
 
             retVal.SetDebugLocation(CurDILocation);
@@ -315,69 +280,69 @@ namespace Microsoft.Zelig.LLVM
         const int SignedBase = 10;
         const int FloatBase = SignedBase + 10;
 
-        static readonly Dictionary<int, Predicate> PredicateMap = new Dictionary<int, Predicate>( )
+        static readonly Dictionary<int, Predicate> PredicateMap = new Dictionary<int, Predicate>()
         {
-            [ 0 ] = Predicate.Equal,                  //llvm::CmpInst::ICMP_EQ;
-            [ 1 ] = Predicate.UnsignedGreaterOrEqual, //llvm::CmpInst::ICMP_UGE;
-            [ 2 ] = Predicate.UnsignedGreater,        //llvm::CmpInst::ICMP_UGT;
-            [ 3 ] = Predicate.UnsignedLessOrEqual,    //llvm::CmpInst::ICMP_ULE;
-            [ 4 ] = Predicate.UnsignedLess,           //llvm::CmpInst::ICMP_ULT;
-            [ 5 ] = Predicate.NotEqual,               //llvm::CmpInst::ICMP_NE;
+            [0] = Predicate.Equal,                  //llvm::CmpInst::ICMP_EQ;
+            [1] = Predicate.UnsignedGreaterOrEqual, //llvm::CmpInst::ICMP_UGE;
+            [2] = Predicate.UnsignedGreater,        //llvm::CmpInst::ICMP_UGT;
+            [3] = Predicate.UnsignedLessOrEqual,    //llvm::CmpInst::ICMP_ULE;
+            [4] = Predicate.UnsignedLess,           //llvm::CmpInst::ICMP_ULT;
+            [5] = Predicate.NotEqual,               //llvm::CmpInst::ICMP_NE;
 
-            [ SignedBase + 0 ] = Predicate.Equal,                //llvm::CmpInst::ICMP_EQ;
-            [ SignedBase + 1 ] = Predicate.SignedGreaterOrEqual, //llvm::CmpInst::ICMP_SGE;
-            [ SignedBase + 2 ] = Predicate.SignedGreater,        //llvm::CmpInst::ICMP_SGT;
-            [ SignedBase + 3 ] = Predicate.SignedLessOrEqual,    //llvm::CmpInst::ICMP_SLE;
-            [ SignedBase + 4 ] = Predicate.SignedLess,           //llvm::CmpInst::ICMP_SLT;
-            [ SignedBase + 5 ] = Predicate.NotEqual,              //llvm::CmpInst::ICMP_NE;
+            [SignedBase + 0] = Predicate.Equal,                //llvm::CmpInst::ICMP_EQ;
+            [SignedBase + 1] = Predicate.SignedGreaterOrEqual, //llvm::CmpInst::ICMP_SGE;
+            [SignedBase + 2] = Predicate.SignedGreater,        //llvm::CmpInst::ICMP_SGT;
+            [SignedBase + 3] = Predicate.SignedLessOrEqual,    //llvm::CmpInst::ICMP_SLE;
+            [SignedBase + 4] = Predicate.SignedLess,           //llvm::CmpInst::ICMP_SLT;
+            [SignedBase + 5] = Predicate.NotEqual,              //llvm::CmpInst::ICMP_NE;
 
-            [ FloatBase + 0 ] = Predicate.OrderedAndEqual,              //llvm::CmpInst::FCMP_OEQ;
-            [ FloatBase + 1 ] = Predicate.OrderedAndGreaterThanOrEqual, //llvm::CmpInst::FCMP_OGE;
-            [ FloatBase + 2 ] = Predicate.OrderedAndGreaterThan,        //llvm::CmpInst::FCMP_OGT;
-            [ FloatBase + 3 ] = Predicate.OrderedAndLessThanOrEqual,    //llvm::CmpInst::FCMP_OLE;
-            [ FloatBase + 4 ] = Predicate.OrderedAndLessThan,           //llvm::CmpInst::FCMP_OLT;
-            [ FloatBase + 5 ] = Predicate.OrderedAndNotEqual            //llvm::CmpInst::FCMP_ONE;
+            [FloatBase + 0] = Predicate.OrderedAndEqual,              //llvm::CmpInst::FCMP_OEQ;
+            [FloatBase + 1] = Predicate.OrderedAndGreaterThanOrEqual, //llvm::CmpInst::FCMP_OGE;
+            [FloatBase + 2] = Predicate.OrderedAndGreaterThan,        //llvm::CmpInst::FCMP_OGT;
+            [FloatBase + 3] = Predicate.OrderedAndLessThanOrEqual,    //llvm::CmpInst::FCMP_OLE;
+            [FloatBase + 4] = Predicate.OrderedAndLessThan,           //llvm::CmpInst::FCMP_OLT;
+            [FloatBase + 5] = Predicate.OrderedAndNotEqual            //llvm::CmpInst::FCMP_ONE;
         };
 
-        public Value InsertCmp( int predicate, bool isSigned, Value valA, Value valB )
+        public Value InsertCmp(int predicate, bool isSigned, Value valA, Value valB)
         {
             _Type booleanImpl = Module.GetNativeBoolType();
 
-            if( (valA.NativeType.IsInteger && valB.NativeType.IsInteger) ||
-                (valA.NativeType.IsPointer && valB.NativeType.IsPointer) )
+            if ((valA.NativeType.IsInteger && valB.NativeType.IsInteger) ||
+                (valA.NativeType.IsPointer && valB.NativeType.IsPointer))
             {
-                Predicate p = PredicateMap[ predicate + ( isSigned ? SignedBase : 0 ) ];
+                Predicate p = PredicateMap[predicate + (isSigned ? SignedBase : 0)];
                 var cmp = IrBuilder.Compare((IntPredicate)p, valA, valB);
                 cmp.SetDebugLocation(CurDILocation);
                 cmp.SetDebugType(booleanImpl);
                 return cmp;
             }
 
-            if( valA.NativeType.IsFloatingPoint && valB.NativeType.IsFloatingPoint )
+            if (valA.NativeType.IsFloatingPoint && valB.NativeType.IsFloatingPoint)
             {
-                Predicate p = PredicateMap[ predicate + FloatBase ];
+                Predicate p = PredicateMap[predicate + FloatBase];
                 var cmp = IrBuilder.Compare((RealPredicate)p, valA, valB);
                 cmp.SetDebugLocation(CurDILocation);
                 cmp.SetDebugType(booleanImpl);
                 return cmp;
             }
 
-            Console.WriteLine( "valA:" );
-            Console.WriteLine( valA.ToString( ) );
-            Console.WriteLine( "valB:" );
-            Console.WriteLine( valB.ToString( ) );
-            throw new NotSupportedException( "Parameter combination not supported for CMP Operator." );
+            Console.WriteLine("valA:");
+            Console.WriteLine(valA.ToString());
+            Console.WriteLine("valB:");
+            Console.WriteLine(valB.ToString());
+            throw new NotSupportedException("Parameter combination not supported for CMP Operator.");
         }
 
-        public Value InsertZExt( Value val, _Type ty, int significantBits )
+        public Value InsertZExt(Value val, _Type ty, int significantBits)
         {
             Value retVal = val;
 
             // TODO: Remove this workaround once issue #123 has been resolved.
             if (significantBits != val.GetDebugType().SizeInBits)
             {
-                retVal = IrBuilder.TruncOrBitCast( val, Module.LlvmModule.Context.GetIntType( ( uint )significantBits ) )
-                                  .SetDebugLocation( CurDILocation );
+                retVal = IrBuilder.TruncOrBitCast(val, Module.LlvmModule.Context.GetIntType((uint)significantBits))
+                                  .SetDebugLocation(CurDILocation);
             }
 
             retVal = IrBuilder.ZeroExtendOrBitCast(retVal, ty.DebugType);
@@ -386,7 +351,7 @@ namespace Microsoft.Zelig.LLVM
             return retVal;
         }
 
-        public Value InsertSExt( Value val, _Type ty, int significantBits )
+        public Value InsertSExt(Value val, _Type ty, int significantBits)
         {
             Value retVal = val;
 
@@ -565,41 +530,41 @@ namespace Microsoft.Zelig.LLVM
         }
 
 
-        static _Type SetValuesForByteOffsetAccess( _Type ty, List<uint> values, int offset, out string fieldName )
+        static _Type SetValuesForByteOffsetAccess(_Type ty, List<uint> values, int offset, out string fieldName)
         {
-            for( int i = 0; i < ty.Fields.Count; ++i )
+            for (int i = 0; i < ty.Fields.Count; ++i)
             {
-                TypeField thisField = ty.Fields[ i ];
+                TypeField thisField = ty.Fields[i];
 
                 // The first field of a reference type is always a super-class, except for the root System.Object.
-                bool fieldIsParent = ( i == 0 && !ty.IsValueType && ty != _Type.GetOrInsertTypeImpl( ty.Module, ty.Module.TypeSystem.WellKnownTypes.Microsoft_Zelig_Runtime_ObjectHeader ) );
+                bool fieldIsParent = (i == 0 && !ty.IsValueType && ty != _Type.GetOrInsertTypeImpl(ty.Module, ty.Module.TypeSystem.WellKnownTypes.Microsoft_Zelig_Runtime_ObjectHeader));
                 int thisFieldSize = thisField.MemberType.SizeInBits / 8;
 
-                int curOffset = ( int )thisField.Offset;
+                int curOffset = (int)thisField.Offset;
                 int nextOffset = curOffset + thisFieldSize;
 
                 // If the next field is beyond our desired offset, inspect the current field. As offset may index into
                 // a nested field, we must recursively inspect each nested field until we find an exact match.
-                if ( nextOffset > offset )
+                if (nextOffset > offset)
                 {
-                    values.Add( thisField.FinalIdx );
+                    values.Add(thisField.FinalIdx);
                     fieldName = thisField.Name;
 
                     // If the current offset isn't an exact match, it must be an offset within a nested field. We also
                     // force inspection of parent classes even on an exact match.
-                    if ( fieldIsParent || ( curOffset != offset ) )
+                    if (fieldIsParent || (curOffset != offset))
                     {
-                        return SetValuesForByteOffsetAccess( thisField.MemberType, values, offset - curOffset, out fieldName );
+                        return SetValuesForByteOffsetAccess(thisField.MemberType, values, offset - curOffset, out fieldName);
                     }
 
                     return thisField.MemberType;
                 }
             }
 
-            throw new NotSupportedException( "Invalid offset for field access." );
+            throw new NotSupportedException("Invalid offset for field access.");
         }
 
-        public Value GetFieldAddress( Value objAddress, int offset, _Type fieldType )
+        public Value GetFieldAddress(Value objAddress, int offset, _Type fieldType)
         {
             Context ctx = Module.LlvmModule.Context;
 
@@ -609,12 +574,12 @@ namespace Microsoft.Zelig.LLVM
             List<Value> valuesForGep = new List<Value>();
 
             // Add an initial 0 value to index into the address.
-            valuesForGep.Add( ctx.CreateConstant( 0 ) );
+            valuesForGep.Add(ctx.CreateConstant(0));
 
             string fieldName = string.Empty;
 
             // Special case: For boxed types, index into the wrapped value type.
-            if ( ( underlyingType != null ) && underlyingType.IsBoxed )
+            if ((underlyingType != null) && underlyingType.IsBoxed)
             {
                 fieldName = underlyingType.Fields[1].Name;
                 underlyingType = underlyingType.UnderlyingType;
@@ -625,21 +590,21 @@ namespace Microsoft.Zelig.LLVM
             // and usually true for boxed values.
             if (underlyingType.IsPrimitiveType || (underlyingType == fieldType))
             {
-                Debug.Assert( offset == 0, "Primitive and boxed types can only have one member, and it must be at offset zero." );
+                Debug.Assert(offset == 0, "Primitive and boxed types can only have one member, and it must be at offset zero.");
             }
             else
             {
                 List<uint> values = new List<uint>();
-                underlyingType = SetValuesForByteOffsetAccess( underlyingType, values, offset, out fieldName );
+                underlyingType = SetValuesForByteOffsetAccess(underlyingType, values, offset, out fieldName);
 
-                for( int i = 0; i < values.Count; ++i )
+                for (int i = 0; i < values.Count; ++i)
                 {
-                    valuesForGep.Add( ctx.CreateConstant( values[ i ] ) );
+                    valuesForGep.Add(ctx.CreateConstant(values[i]));
                 }
             }
 
             // Special case: No-op trivial GEP instructions, and just return the original address.
-            if( valuesForGep.Count == 1 )
+            if (valuesForGep.Count == 1)
             {
                 return objAddress;
             }
@@ -648,7 +613,7 @@ namespace Microsoft.Zelig.LLVM
                                .RegisterName($"{objAddress.Name}.{fieldName}")
                                .SetDebugLocation(CurDILocation);
 
-            _Type pointerType = Module.GetOrInsertPointerType( underlyingType );
+            _Type pointerType = Module.GetOrInsertPointerType(underlyingType);
             gep.SetDebugType(pointerType);
             return gep;
         }
@@ -712,7 +677,7 @@ namespace Microsoft.Zelig.LLVM
             return oldVal;
         }
 
-        public void SetVariableName(Value value, VariableExpression expression)
+        public void SetVariableName(Value value, IR.VariableExpression expression)
         {
             string name = expression.DebugName?.Name;
             if (!string.IsNullOrWhiteSpace(name))
@@ -725,7 +690,7 @@ namespace Microsoft.Zelig.LLVM
 
         internal BasicBlock LlvmBasicBlock { get; }
 
-        internal DILocation CurDILocation = null;
+        private DILocation CurDILocation = null;
 
         private readonly _Module Module;
         private readonly _Function Owner;
