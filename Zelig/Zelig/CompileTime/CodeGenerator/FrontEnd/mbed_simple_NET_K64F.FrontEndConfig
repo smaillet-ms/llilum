@@ -74,7 +74,7 @@
 ### Dumps and diagnostics
 ###
 #-DumpIRBeforePhase All
-#-DumpIR
+-DumpIR
 #-DumpIRpre
 #-DumpIRpost
 #-DumpIRXML
@@ -86,7 +86,7 @@
 -MaxProcs 8
 
 -NoSDK
--GenerateObj
+#-GenerateObj
 
 # examples of overriding opt.exe and llc arguments
 # the examples here are the same as the defaults but can be modified to suit a variety of test

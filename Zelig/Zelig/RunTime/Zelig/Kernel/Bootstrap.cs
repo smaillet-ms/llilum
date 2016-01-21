@@ -10,6 +10,7 @@
 
 // Enables self-tests covering null/bounds/overflow checks.
 //#define SELF_TEST_CHECKS
+#define INLINE_TESTS
 
 using Microsoft.Zelig.Runtime.TargetPlatform.ARMv7;
 
@@ -19,6 +20,7 @@ namespace Microsoft.Zelig.Runtime
     using System.Runtime.CompilerServices;
 
     using TS = Microsoft.Zelig.Runtime.TypeSystem;
+
 
     // 
     // During bootstrap there's the problem of where to put the machine stack and what to do with it afterwards.
@@ -51,6 +53,33 @@ namespace Microsoft.Zelig.Runtime
 
             Initialization();
         }
+
+#if INLINE_TESTS
+        // these methods allow testing of inline debug information for
+        // inlined calls arguments and locals
+
+        [Inline]
+        static int InlineDepth2(int arg1ForInlineDepth2, int arg2ForInlineDepth2)
+        {
+            var InlineDepth2Local = SelfTest.GetANumber();
+            return InlineDepth2Local + arg1ForInlineDepth2 + arg2ForInlineDepth2;
+        }
+
+        [Inline]
+        static int InlineDepth1( int arg1ForInlineDepth1, int arg2ForInlineDepth1)
+        {
+            var InlineDepth1Local = SelfTest.GetANumber();
+            return InlineDepth2(arg1ForInlineDepth1, arg2ForInlineDepth1 + InlineDepth1Local);
+        }
+
+        [NoInline]
+        static void NeverInlined()
+        {
+            var result = InlineDepth1(SelfTest.GetANumber(), SelfTest.GetANumber());
+            SelfTest.SELFTEST_ASSERT(result > 0);
+        }
+#endif
+
 
         [NoInline]
         [NoReturn]
@@ -85,7 +114,9 @@ namespace Microsoft.Zelig.Runtime
 #if SELF_TEST_MEMORY
             SelfTest.SelfTest__Memory();
 #endif // SELF_TEST_MEMORY
-
+#if INLINE_TESTS
+            NeverInlined();
+#endif
             //
             // Once all the software services have been initialized, we can activate the hardware.
             // Activating the hardware might require starting threads, associated delegate with callbacks, etc.

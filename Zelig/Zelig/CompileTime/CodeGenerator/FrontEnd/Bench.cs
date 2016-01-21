@@ -2045,16 +2045,18 @@ namespace Microsoft.Zelig.FrontEnd
             if( m_fGenerateObj )
             {
                 var objFile     = filePrefix + "_opt.o";
-                var llcSwitches = BuildLlcArchitectureArgs(); 
+                m_typeSystem.Module.DumpToFile( objFile, LLVM.OutputFormat.TargetObjectFile );
 
-                Console.WriteLine( "Compiling LLVM Bitcode" );
-                var args = string.Format( "{0} -o={1} {2}"          ,
-                                        m_LlvmLlcArgs ?? llcSwitches,
-                                        objFile                     ,
-                                        filePrefix + "_opt.bc"         
-                                        );
+                //var llcSwitches = BuildLlcArchitectureArgs(); 
 
-                ShellExec( "llc.exe", args );
+                //Console.WriteLine( "Compiling LLVM Bitcode" );
+                //var args = string.Format( "{0} -o={1} {2}"          ,
+                //                        m_LlvmLlcArgs ?? llcSwitches,
+                //                        objFile                     ,
+                //                        filePrefix + "_opt.bc"         
+                //                        );
+
+                //ShellExec( "llc.exe", args );
 
                 DumpElfInformation( objFile, filePrefix );
             }
@@ -2163,14 +2165,14 @@ namespace Microsoft.Zelig.FrontEnd
         private int ShellExec( string exe, string args )
         {
             var startInfo = new ProcessStartInfo( exe, args )
-            { CreateNoWindow = true
-            , UseShellExecute = false
-            , RedirectStandardError = true
-            , RedirectStandardOutput = true
-            };
+                { CreateNoWindow = true
+                , UseShellExecute = false
+                , RedirectStandardError = true
+                , RedirectStandardOutput = true
+                };
 
             // for reasons unknown launching a process via ProcessStart doesn't actually inherit the
-            // STDOUT and STDERR so this has to capture the output from poth and then send it to the
+            // STDOUT and STDERR so this has to capture the output from both and then send it to the
             // console explicitly or the output from the process will just end up in the bit pool at
             // the bottom of the computer's chasis.
             var proc = new Process( ) { StartInfo = startInfo };
