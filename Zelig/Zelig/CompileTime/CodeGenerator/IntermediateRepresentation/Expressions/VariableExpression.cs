@@ -30,7 +30,6 @@ namespace Microsoft.Zelig.CodeGeneration.IR
             private string               m_name;
             private int                  m_number;
             private bool                 m_isLocal;
-
             //
             // Constructor Methods
             //
@@ -109,7 +108,7 @@ namespace Microsoft.Zelig.CodeGeneration.IR
         protected const int c_VariableKind_Temporary = 3;
 
         //
-        // State
+        // Protected State
         //
 
         protected DebugInfo m_debugInfo;
@@ -161,7 +160,7 @@ namespace Microsoft.Zelig.CodeGeneration.IR
 
             context.Transform( ref m_number    );
             context.Transform( ref m_debugInfo );
-
+            InliningPath?.ApplyTransformation(context);
             context.Pop();
         }
 
@@ -186,6 +185,7 @@ namespace Microsoft.Zelig.CodeGeneration.IR
         //
         // Access Methods
         //
+        public IInlinedPathDetails InliningPath { get; set; }
 
         public DebugInfo DebugName
         {

@@ -703,4 +703,10 @@ extern "C"
         DILocalScope* pScope = unwrap<DILocalScope>( localScope );
         return wrap( pScope->getSubprogram( ) );
     }
+
+    /*Function*/ LLVMValueRef LLVMDISubProgramGetFunction( LLVMMetadataRef /*DISubProgram*/ subProgram )
+    {
+        DISubprogram* pSub = unwrap<DISubprogram>( subProgram );
+        return wrap( pSub->getFunction( ) );
+    }
 }

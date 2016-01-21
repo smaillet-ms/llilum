@@ -2,15 +2,14 @@
 using Llvm.NET.DebugInfo;
 using Llvm.NET.Types;
 using Llvm.NET.Values;
-using Microsoft.Zelig.Debugging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using IR = Microsoft.Zelig.CodeGeneration.IR;
-
-using BasicBlock = Llvm.NET.Values.BasicBlock;
 using Microsoft.Zelig.Runtime.TypeSystem;
+
+using IR = Microsoft.Zelig.CodeGeneration.IR;
+using BasicBlock = Llvm.NET.Values.BasicBlock;
 
 namespace Microsoft.Zelig.LLVM
 {
@@ -24,6 +23,9 @@ namespace Microsoft.Zelig.LLVM
             IrBuilder = new InstructionBuilder(LlvmBasicBlock);
         }
 
+        public _Module Module { get; }
+        public _Function Owner { get; }
+
         public void InsertASMString(string ASM)
         {
 #if DUMP_INLINED_COMMENTS_AS_ASM_CALLS
@@ -36,25 +38,90 @@ namespace Microsoft.Zelig.LLVM
 #endif
         }
 
-        public void InsertDbgValueForVariable(Value value, IR.VariableExpression expression)
+        internal void GenerateDebugInfoForVariableValue( IR.VariableExpression expression, Value value)
         {
-            if (expression.DebugName == null)
-                return;
+            // shouldn't happen but be safe anyway
+            Debug.Assert(expression.DebugName != null);
 
-            DebugInfo variableDebugInfo = Module.Manager.GetDebugInfoFor(expression.DebugName.Context);
-            if (variableDebugInfo == null)
-                return;
+            // use the context from the DebugName as that reflects the true scope
+            // when the variable is the result of inlining a method
+            var debugInfo = Module.Manager.GetDebugInfoFor(expression.DebugName.Context);
+            var expressionScope = Module.Manager.GetScopeFor(expression.DebugName.Context);
 
-            DISubProgram variableScope = Module.Manager.GetScopeFor(expression.DebugName.Context);
-            // if the variable isn't inlined from some other scope, do nothing
-            // in the future this may be changed so that all variables are treated
-            // the same, whether inlined or not. 
-            if (Owner.LlvmFunction.DISubProgram == variableScope)
-                return;
+            DILocation symbolLocation = debugInfo.AsDILocation(expressionScope);
+            DILocation valueLocation = symbolLocation;
+            if (expression.InliningPath != null)
+            {
+                // build inlined chain of locations with this block's owner as the outermost scope
+                valueLocation = expression.InliningPath.GetDebugLocationFor(Module, Owner.LlvmFunction, debugInfo);
+            }
 
-            // TODO: find associated DILocalVariable for expression...
-            //Module.DIBuilder.InsertValue(value, 0, /*DILocalVaraible*/ null, CurDILocation, LlvmBasicBlock);
-            Debug.Assert(expression.m_identity >= 0); // bogus check to enable setting a breakpoint when this found an inlined var
+            Debug.Assert(valueLocation.InlinedAtScope == null || valueLocation.InlinedAtScope.SubProgram.Describes(Owner.LlvmFunction));
+
+            if(!valueLocation.Scope.SubProgram.Describes(expressionScope.Function))
+            {
+                // TODO: Above check should be an assert but, the root cause case isn't handled yet... so ignore the debug info to test the rest
+                Debug.Print("expression: '{0}'", expression);
+                Debug.Print("expressionScope: '{0}'", expressionScope);
+                Debug.Print("valuelocation: '{0}", valueLocation);
+                return;
+            }
+
+            DILocalVariable localSym;
+
+            _Type valType = Module.Manager.GetOrInsertType(expression.Type);
+            if (!expression.DebugName.IsLocal)
+            {
+                // Adjust index since IR form keeps slot = 0 as the "this" param, for static methods it just sets that to
+                // null. LLVM doesn't have any notion of that and only has a slot for an actual arg. But only for non-inlined
+                // arguments. (inlined args are converted to a VariableExpression so won't pass the "is ArgumentVariableExpression"
+                // check) 
+                uint index = (uint)expression.DebugName.Number;
+                if (Owner.Method is StaticMethodRepresentation && ( expression is IR.ArgumentVariableExpression ) )
+                {
+                    index--;
+                }
+
+                localSym = Module.DIBuilder.CreateArgument( expressionScope
+                                                          , expression.DebugName.Name
+                                                          , symbolLocation.Scope.File
+                                                          , symbolLocation.Line
+                                                          , valType.DIType
+                                                          , true
+                                                          , DebugInfoFlags.None
+                                                          , index
+                                                          );
+            }
+            else
+            {
+                localSym = Module.DIBuilder.CreateLocalVariable( expressionScope
+                                                               , expression.DebugName.Name
+                                                               , symbolLocation.Scope.File
+                                                               , symbolLocation.Line
+                                                               , valType.DIType
+                                                               , true
+                                                               , DebugInfoFlags.None
+                                                               );
+            }
+
+            // For reference types passed as a pointer, tell debugger to deref the pointer.
+            DIExpression expr = Module.DIBuilder.CreateExpression();
+            if (!value.GetDebugType().IsValueType)
+            {
+                expr = Module.DIBuilder.CreateExpression(ExpressionOp.deref);
+            }
+
+            // LVM doesn't allow llvm.dbg.declare instrinsic for arguments belonging
+            // to a different scope (e.g. inlined ) that is only allowed via the
+            // llvm.dbg.value instrinsic. 
+            if (expression.InliningPath != null)
+            {
+                Module.DIBuilder.InsertValue(value, localSym, expr, valueLocation, LlvmBasicBlock);
+            }
+            else
+            {
+                Module.DIBuilder.InsertDeclare(value, localSym, expr, valueLocation, LlvmBasicBlock);
+            }
         }
 
         public Value GetMethodArgument(int index, _Type type)
@@ -232,7 +299,7 @@ namespace Microsoft.Zelig.LLVM
                 throw new ArgumentNullException(nameof(op));
 
             var annotation = op.GetAnnotation<IR.InliningPathAnnotation>();
-            CurDILocation = annotation.GetDebugLocationFor( Module, Owner.LlvmFunction, op.DebugInfo );
+            CurDILocation = annotation?.GetDebugLocationFor( Module, Owner.LlvmFunction, op.DebugInfo );
         }
 
         public void EndOperator()
@@ -691,8 +758,5 @@ namespace Microsoft.Zelig.LLVM
         internal BasicBlock LlvmBasicBlock { get; }
 
         private DILocation CurDILocation = null;
-
-        private readonly _Module Module;
-        private readonly _Function Owner;
     }
 }

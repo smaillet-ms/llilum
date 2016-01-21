@@ -52,6 +52,8 @@ namespace Microsoft.Zelig.LLVM
         internal _Function(_Module module, TS.MethodRepresentation method)
         {
             Module = module;
+            Method = method;
+
             LlvmValue = CreateLLvmFunctionWithDebugInfo(module, method);
             LlvmValue.SetDebugType(module.Manager.GetOrInsertType(method));
 
@@ -88,8 +90,10 @@ namespace Microsoft.Zelig.LLVM
             }
         }
 
+        public TS.MethodRepresentation Method { get; }
+
         // In LLVM, the context owns the value. However, a _Module here is a container for the
-        // context, a module, and a DiBuilder with assorted other state info.
+        // context, a NativeModule, and a DiBuilder with assorted other state info.
         public _Module Module
         {
             get;
@@ -129,79 +133,27 @@ namespace Microsoft.Zelig.LLVM
             IR.VariableExpression val
             )
         {
-            bool hasDebugName = !string.IsNullOrWhiteSpace( val.DebugName?.Name );
+            Debug.Assert(block.Owner == this);
+            // test for elimination of arg... 
+            Debug.Assert(method == Method);
+
+            bool hasDebugName = !string.IsNullOrWhiteSpace(val.DebugName?.Name);
 
             Value retVal = block.InsertAlloca(
-                hasDebugName ? val.DebugName.Name : val.ToString( ),
-                Module.Manager.GetOrInsertType( val.Type ) );
+                hasDebugName ? val.DebugName.Name : val.ToString(),
+                Module.Manager.GetOrInsertType(val.Type));
 
             // If the local did not have a valid symbolic name in the source code
             // then don't generate LLVM debug info either
-            if( !hasDebugName )
+            if (!hasDebugName)
             {
                 return retVal;
             }
 
-            // use the context from the DebugName as that reflects the true scope
-            // when the variable is the result of inlining a method
-            var debugInfo = Module.Manager.GetDebugInfoFor(val.DebugName.Context);
-            var diScope = Module.Manager.GetScopeFor(val.DebugName.Context);
-
-            var diLocation = debugInfo.AsDILocation( diScope );
-            DILocalVariable localSym;
-
-            _Type valType = Module.Manager.GetOrInsertType( val.Type );
-            var argExpression = val as IR.ArgumentVariableExpression;
-            if( argExpression != null )
-            {
-                // Adjust index since IR form keeps slot = 0 as the "this" param for static methods it just sets that to
-                // null. LLVM doesn't have any notion of that and only has a slot for an actual arg.
-                uint index = ( uint )argExpression.Number;
-                if( method is TS.StaticMethodRepresentation )
-                {
-                    index--;
-                }
-
-                localSym = Module.DIBuilder.CreateArgument( diScope
-                                                          , val.DebugName.Name
-                                                          , diLocation.Scope.File
-                                                          , diLocation.Line
-                                                          , valType.DIType
-                                                          , true
-                                                          , DebugInfoFlags.None
-                                                          , index
-                                                          );
-            }
-            else
-            {
-                localSym = Module.DIBuilder.CreateLocalVariable( diScope
-                                                               , val.DebugName.Name
-                                                               , diLocation.Scope.File
-                                                               , diLocation.Line 
-                                                               , valType.DIType
-                                                               , true
-                                                               , DebugInfoFlags.None
-                                                               );
-            }
-
-            // For reference types passed as a pointer, tell debugger to deref the pointer.
-            DIExpression expr = Module.DIBuilder.CreateExpression( );
-            if( !retVal.GetDebugType().IsValueType )
-            {
-                expr = Module.DIBuilder.CreateExpression( ExpressionOp.deref );
-            }
-
-            // detect inlined variables and use InsertValue instead of InsertDeclare
-            if (val.DebugName.Context != method)
-            {
-                Module.DIBuilder.InsertValue(retVal, 0, localSym, expr, diLocation, block.LlvmBasicBlock);
-            }
-            else
-            {
-                Module.DIBuilder.InsertDeclare(retVal, localSym, expr, diLocation, block.LlvmBasicBlock);
-            }
+            block.GenerateDebugInfoForVariableValue( val, retVal);
             return retVal;
         }
+
 
         public void SetExternalLinkage()
         {

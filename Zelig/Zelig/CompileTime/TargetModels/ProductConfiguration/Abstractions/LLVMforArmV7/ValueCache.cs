@@ -2,7 +2,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 //
 
-using System;
 using Llvm.NET.Values;
 using Microsoft.Zelig.LLVM;
 using Microsoft.Zelig.CodeGeneration.IR;
@@ -53,7 +52,6 @@ namespace Microsoft.Zelig.Configuration.Environment.Abstractions.Architectures
 
         public void SetValueForBlock(_BasicBlock block, Value value)
         {
-            block.InsertDbgValueForVariable(value, Expression);
             m_loadedValues[block] = value;
         }
     }

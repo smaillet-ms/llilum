@@ -4,18 +4,17 @@
 
 namespace Microsoft.Zelig.CodeGeneration.IR
 {
-    using System;
-    using System.Collections.Generic;
-
     using Microsoft.Zelig.Runtime.TypeSystem;
+    using System;
     using System.Diagnostics;
 
-    public sealed class InliningPathAnnotation : Annotation
+    public sealed class InliningPathAnnotation 
+        : Annotation
+        , IInlinedPathDetails
     {
         //
         // State
         //
-
         private MethodRepresentation[] m_path;
         private Debugging.DebugInfo[] m_DebugInfo;
 
@@ -34,20 +33,20 @@ namespace Microsoft.Zelig.CodeGeneration.IR
                                                      InliningPathAnnotation anOuter ,
                                                      MethodRepresentation   md      ,
                                                      Debugging.DebugInfo    debugInfo,
-                                                     InliningPathAnnotation anInner )
+                                                     IInlinedPathDetails    anInner )
         {
             Debug.Assert(anOuter == null || anOuter.DebugInfoPath.Length == anOuter.Path.Length);
             Debug.Assert(anInner == null || anInner.DebugInfoPath.Length == anInner.Path.Length);
 
             var pathOuter = anOuter != null ? anOuter.m_path : MethodRepresentation.SharedEmptyArray;
-            var pathInner = anInner != null ? anInner.m_path : MethodRepresentation.SharedEmptyArray;
+            var pathInner = anInner != null ? anInner.Path : MethodRepresentation.SharedEmptyArray;
             var path = ArrayUtility.AppendToNotNullArray( pathOuter, md );
             path = ArrayUtility.AppendNotNullArrayToNotNullArray( path, pathInner );
 
             var emptyDebugInfoArray = new Debugging.DebugInfo[0];
 
             var debugInfoOuter = anOuter?.m_DebugInfo ?? emptyDebugInfoArray;
-            var debugInfoInner = anInner?.m_DebugInfo ?? emptyDebugInfoArray;
+            var debugInfoInner = anInner?.DebugInfoPath ?? emptyDebugInfoArray;
             var debugInfoPath = ArrayUtility.AppendToNotNullArray( debugInfoOuter, debugInfo );
             debugInfoPath = ArrayUtility.AppendNotNullArrayToNotNullArray( debugInfoPath, debugInfoInner );
 
@@ -87,7 +86,7 @@ namespace Microsoft.Zelig.CodeGeneration.IR
         public override Annotation Clone( CloningContext context )
         {
             MethodRepresentation[] path = context.ConvertMethods( m_path );
-            
+
             if(Object.ReferenceEquals( path, m_path ))
             {
                 return this; // Nothing to change.
@@ -112,18 +111,25 @@ namespace Microsoft.Zelig.CodeGeneration.IR
                 // Don't propagate the path, it might include methods that don't exist anymore.
                 //
             }
-            else if(context is TypeSystemForCodeTransformation.FlagProhibitedUses)
+            else if (context is TypeSystemForCodeTransformation.FlagProhibitedUses)
             {
                 TypeSystemForCodeTransformation ts = (TypeSystemForCodeTransformation)context.GetTypeSystem();
 
-                for(int i = m_path.Length; --i >= 0; )
+                for (int i = m_path.Length; --i >= 0;)
                 {
                     MethodRepresentation md = m_path[i];
 
-                    if(ts.ReachabilitySet.IsProhibited( md ))
+                    if (ts.ReachabilitySet.IsProhibited(md))
                     {
-                        m_path = ArrayUtility.RemoveAtPositionFromNotNullArray( m_path, i );
+                        // REVIEW:
+                        // Consider implications of not removing the entry, but instead
+                        // setting it to null, this would keep the Source and line debug
+                        // info so the debug info code gneration could treat this like a
+                        // pre-processor macro substitution instead of an inlined call to
+                        // a function that doesn't exist anymore.
+                        m_path = ArrayUtility.RemoveAtPositionFromNotNullArray(m_path, i);
                         m_DebugInfo = ArrayUtility.RemoveAtPositionFromNotNullArray(m_DebugInfo, i);
+                        IsSquashed = true;
                     }
                 }
             }
@@ -141,6 +147,7 @@ namespace Microsoft.Zelig.CodeGeneration.IR
         //
         // Access Methods
         //
+        public bool IsSquashed { get; private set; }
 
         /// <summary>Method path for an inlined operator</summary>
         /// <remarks>
@@ -158,6 +165,7 @@ namespace Microsoft.Zelig.CodeGeneration.IR
         /// entry in DebugInfoPath contains the source location where the operator was inlined *into*.</para>
         /// </remarks>
         public Debugging.DebugInfo[] DebugInfoPath => m_DebugInfo;
+
 
         //--//
 

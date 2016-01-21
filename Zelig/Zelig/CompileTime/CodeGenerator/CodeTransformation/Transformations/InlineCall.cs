@@ -9,7 +9,7 @@ namespace Microsoft.Zelig.CodeGeneration.IR.Transformations
     using System.Collections.Generic;
 
     using Microsoft.Zelig.Runtime.TypeSystem;
-
+    using System.Linq;
 
     public sealed class InlineCall
     {
@@ -86,16 +86,26 @@ namespace Microsoft.Zelig.CodeGeneration.IR.Transformations
                 }
             }
 
-            internal void UpdateInliningPath( InliningPathAnnotation anOuter, Debugging.DebugInfo callSiteDebugInfo )
+            internal void UpdateInliningPaths( InliningPathAnnotation anOuter, Debugging.DebugInfo callSiteDebugInfo, GrowOnlyList<VariableExpression> clonedVars )
             {
                 MethodRepresentation md = m_cfgSource.Method;
+                
+                // update the inline path for every cloned local and arg
+                foreach (var local in clonedVars)
+                {
+                    var anInner = local.InliningPath;
+                    var anNew = InliningPathAnnotation.Create(TypeSystem, anOuter, md, callSiteDebugInfo, anInner);
 
+                    local.InliningPath = anNew;
+                }
+
+                // update the inlining path informoation for every operator in every block
                 foreach (BasicBlock block in m_inlinedBasicBlocks)
                 {
                     foreach(Operator op in block.Operators )
                     {
                         var anInner = op.GetAnnotation<InliningPathAnnotation>();
-                        var anNew = InliningPathAnnotation.Create(this.TypeSystem, anOuter, md, callSiteDebugInfo, anInner);
+                        var anNew = InliningPathAnnotation.Create(TypeSystem, anOuter, md, callSiteDebugInfo, anInner);
 
                         op.RemoveAnnotation(anInner);
                         op.AddAnnotation(anNew);
@@ -199,13 +209,14 @@ namespace Microsoft.Zelig.CodeGeneration.IR.Transformations
             BasicBlock                otherExit  = otherCFG.NormalizedExitBasicBlock;
                                         
             CloningContextForInlining context    = new CloningContextForInlining( otherCFG, m_cfg, callback );
+            GrowOnlyList<VariableExpression> clonedVars = new GrowOnlyList<VariableExpression>();
 
             //
             // Enumerate all the variables in the target method, create a proper copy (either a local or a temporary variable).
             //
             foreach(VariableExpression var in otherCFG.DataFlow_SpanningTree_Variables)
             {
-                CloneVariable( context, otherCFG, call, rhs, var, false );
+                clonedVars.Add( CloneVariable( context, otherCFG, call, rhs, var, false ) );
             }
 
             //
@@ -348,7 +359,7 @@ namespace Microsoft.Zelig.CodeGeneration.IR.Transformations
 
             context.ApplyProtection( current.ProtectedBy );
 
-            context.UpdateInliningPath( call.GetAnnotation< InliningPathAnnotation >(), call.DebugInfo );
+            context.UpdateInliningPaths(call.GetAnnotation<InliningPathAnnotation>(), call.DebugInfo, clonedVars );
 
             context.ResetBasicBlockAnnotations();
 

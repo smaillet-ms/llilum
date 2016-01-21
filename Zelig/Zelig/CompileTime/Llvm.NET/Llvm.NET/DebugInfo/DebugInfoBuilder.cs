@@ -316,7 +316,7 @@ namespace Llvm.NET.DebugInfo
         /// <param name="file"><see cref="DIFile"/> containing the function this argument is declared in</param>
         /// <param name="line">Line number fort his argument</param>
         /// <param name="type">Debug type for this argument</param>
-        /// <param name="alwaysPreserve">FLag to indicate if this argument is always preserved for debug view even if optimization would remove it</param>
+        /// <param name="alwaysPreserve">Flag to indicate if this argument is always preserved for debug view even if optimization would remove it</param>
         /// <param name="debugFlags"><see cref="DebugInfoFlags"/> for this argument</param>
         /// <param name="argNo">One based argument index on the method (e.g the first argument is 1 not 0 )</param>
         /// <returns><see cref="DILocalVariable"/> representing the function argument</returns>
@@ -330,6 +330,9 @@ namespace Llvm.NET.DebugInfo
                                              , uint argNo
                                              )
         {
+            if (argNo > UInt16.MaxValue)
+                throw new ArgumentOutOfRangeException(nameof(argNo), "Argument index must fit in 16but unsigned value");
+
             return CreateLocalVariable( Tag.ArgVariable, scope, name, file, line, type, alwaysPreserve, ( uint )debugFlags, argNo );
         }
 
@@ -782,6 +785,17 @@ namespace Llvm.NET.DebugInfo
             return InsertValue( value, offset, varInfo, null, location, insertAtEnd );
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
+        public CallInstruction InsertValue( Value value
+                                          , DILocalVariable varInfo
+                                          , DIExpression expression
+                                          , DILocation location
+                                          , BasicBlock insertAtEnd
+                                          )
+        {
+            return InsertValue(value, 0, varInfo, expression, location, insertAtEnd);
+        }
+
         [System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters" )]
         public CallInstruction InsertValue( Value value
                                           , UInt64 offset
@@ -808,6 +822,9 @@ namespace Llvm.NET.DebugInfo
 
             if( location.Scope != varInfo.Scope )
                 throw new ArgumentException( "mismatched scopes" );
+
+            if( !location.Describes(insertAtEnd.ContainingFunction ) )
+                throw new ArgumentException( "location does not describe the specified block's containing function" );
 
             var handle = NativeMethods.DIBuilderInsertValueAtEnd( BuilderHandle
                                                                  , value.ValueHandle

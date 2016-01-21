@@ -31,6 +31,7 @@ LLVMGetAliasee
 LLVMMDNodeResolveCycles
 LLVMGetArgumentIndex
 LLVMDIScopeGetFile
+LLVMDISubProgramGetFunction
 
 ; Debug info functions not part of standard LLVM-C API
 LLVMGetMetadataID
