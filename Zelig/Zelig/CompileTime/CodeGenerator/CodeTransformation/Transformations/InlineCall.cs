@@ -93,13 +93,20 @@ namespace Microsoft.Zelig.CodeGeneration.IR.Transformations
                 // update the inline path for every cloned local and arg
                 foreach (var local in clonedVars)
                 {
+                    if (local.DebugName == null)
+                        continue;
+
                     var anInner = local.InliningPath;
+                    // for locals the innermost scope comes from the debugName.Context so build the annotation for that
+                    if (anInner == null)
+                        anInner = InliningPathAnnotation.Create(TypeSystem, null, local.DebugName.Context, null, null);
+
                     var anNew = InliningPathAnnotation.Create(TypeSystem, anOuter, md, callSiteDebugInfo, anInner);
 
                     local.InliningPath = anNew;
                 }
 
-                // update the inlining path informoation for every operator in every block
+                // update the inlining path information for every operator in every block
                 foreach (BasicBlock block in m_inlinedBasicBlocks)
                 {
                     foreach(Operator op in block.Operators )

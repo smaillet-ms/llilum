@@ -38,7 +38,7 @@ namespace Microsoft.Zelig.LLVM
 #endif
         }
 
-        internal void GenerateDebugInfoForVariableValue( IR.VariableExpression expression, Value value)
+        public void GenerateDebugInfoForVariableValue( IR.VariableExpression expression, Value value)
         {
             // shouldn't happen but be safe anyway
             Debug.Assert(expression.DebugName != null);
@@ -57,15 +57,7 @@ namespace Microsoft.Zelig.LLVM
             }
 
             Debug.Assert(valueLocation.InlinedAtScope == null || valueLocation.InlinedAtScope.SubProgram.Describes(Owner.LlvmFunction));
-
-            if(!valueLocation.Scope.SubProgram.Describes(expressionScope.Function))
-            {
-                // TODO: Above check should be an assert but, the root cause case isn't handled yet... so ignore the debug info to test the rest
-                Debug.Print("expression: '{0}'", expression);
-                Debug.Print("expressionScope: '{0}'", expressionScope);
-                Debug.Print("valuelocation: '{0}", valueLocation);
-                return;
-            }
+            Debug.Assert(valueLocation.Scope.SubProgram.Describes(expressionScope.Function));
 
             DILocalVariable localSym;
 

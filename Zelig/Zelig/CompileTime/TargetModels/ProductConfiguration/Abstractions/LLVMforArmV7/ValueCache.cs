@@ -52,6 +52,10 @@ namespace Microsoft.Zelig.Configuration.Environment.Abstractions.Architectures
 
         public void SetValueForBlock(_BasicBlock block, Value value)
         {
+            // inlined variables and args must indicate updated value for debugger to track
+            if (Expression.InliningPath != null)
+                block.GenerateDebugInfoForVariableValue(Expression, value);
+
             m_loadedValues[block] = value;
         }
     }

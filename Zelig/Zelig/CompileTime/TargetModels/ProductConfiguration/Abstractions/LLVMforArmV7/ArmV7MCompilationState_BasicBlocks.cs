@@ -104,7 +104,7 @@ namespace Microsoft.Zelig.Configuration.Environment.Abstractions.Architectures
                 ValueCache valueCache;
                 if (RequiresAddress(expr, defChains, useChains))
                 {
-                    Value address = m_function.GetLocalStackValue(m_method, m_basicBlock, expr);
+                    Value address = m_function.GetLocalStackValue( m_basicBlock, expr);
                     valueCache = new ValueCache(expr, address);
                 }
                 else
@@ -290,6 +290,11 @@ namespace Microsoft.Zelig.Configuration.Environment.Abstractions.Architectures
                 return;
             }
 
+            // notify block of new IR operator
+            // all LLVM instructions generated between BeginOperaotr()
+            // and EndOperator() calls are tagged with debug location
+            // and scope information for the operator that generated
+            // it.
             m_basicBlock.BeginOperator( op );
             try
             {

@@ -127,15 +127,9 @@ namespace Microsoft.Zelig.LLVM
             return retVal;
         }
 
-        public Value GetLocalStackValue(
-            TS.MethodRepresentation method,
-            _BasicBlock block,
-            IR.VariableExpression val
-            )
+        public Value GetLocalStackValue( _BasicBlock block,  IR.VariableExpression val )
         {
             Debug.Assert(block.Owner == this);
-            // test for elimination of arg... 
-            Debug.Assert(method == Method);
 
             bool hasDebugName = !string.IsNullOrWhiteSpace(val.DebugName?.Name);
 

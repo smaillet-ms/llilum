@@ -18,7 +18,7 @@ namespace Microsoft.Zelig.LLVM
         /// <param name="innermostDebugInfo">Zelig IR Debug info for the innermost source location</param>
         /// <returns><see cref="DebugInfo"/> with full chained scoping (e.g. InlinedAt is set for full scope chain) for inlined functions</returns>
         /// <remarks>
-        /// LLVM Locations require full stracking from the innermost location to the outer most, however the Zelig IR
+        /// LLVM Locations require full tracking from the innermost location to the outer most, however the Zelig IR
         /// <see cref="IInlinedPathDetails"/> doesn't store the innermost source location, nor the outermost function
         /// scope. Thus an InliningPathAnnotation on its own is insufficient to construct the LLVM debug information.
         /// This method takes care of that by using the additional parameters to complete the information.
