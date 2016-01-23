@@ -103,7 +103,7 @@ namespace Microsoft.Zelig.FrontEnd
         const string c_CortexM7 = "cortex-m7";
 
         // These are the default arguments to LLC.EXE if not specified in the command line arguments
-        const string DefaultLlcArgs_common    = "-O2 -code-model=small -data-sections -filetype=obj";
+        const string DefaultLlcArgs_common    = "-O2 -code-model=small -data-sections -filetype=obj -disable-fp-elim";
         const string DefaultLlcArgs_target_m0 = "-march=thumb -mcpu=cortex-m0 -mtriple=thumbv6m-none-eabi";
         const string DefaultLlcArgs_target_m3 = "-march=thumb -mcpu=cortex-m3 -mtriple=thumbv7m-none-eabi";
         //const string DefaultLlcArgs_target_m4 = "-march=thumb -mcpu=cortex-m4 -mtriple=thumbv7m-none-eabi"; https://github.com/NETMF/llilum/issues/136

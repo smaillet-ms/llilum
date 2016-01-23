@@ -53,7 +53,6 @@ namespace Microsoft.Zelig.LLVM
                         };
 
             LlvmModule.AddModuleFlag( ModuleFlagBehavior.Override, NativeModule.DebugVersionValue, NativeModule.DebugMetadataVersion );
-
             TypeSystem = typeSystem;
         }
 

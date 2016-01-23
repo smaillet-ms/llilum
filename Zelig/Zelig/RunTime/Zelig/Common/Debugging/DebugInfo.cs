@@ -55,6 +55,14 @@ namespace Microsoft.Zelig.Debugging
             SetMarkerForLine( srcFileName, methodName, lineNumber );
         }
 
+        // To prevent problems with assembly circular dependencies
+        // this is of type System.Object, but ultimately should
+        // always be a Microsoft.Zelig.Runtime.TypeSystem.MethodRepresentation
+        // This is used in conversion to LLVM debug information, particularly
+        // when handling inlined code. For IL instructions that had no debug
+        // information or compiler generated IR operators this will be null.
+        public object Scope { get; set; }
+
         //
         // Equality Methods
         //

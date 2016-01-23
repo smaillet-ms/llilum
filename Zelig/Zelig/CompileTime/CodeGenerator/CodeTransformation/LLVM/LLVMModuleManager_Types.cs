@@ -271,7 +271,6 @@ namespace Microsoft.Zelig.LLVM
                 if( method.DebugInfo == null )
                     method.DebugInfo = m_dummyDebugInfo;
             }
-
             return method.DebugInfo;
         }
     }

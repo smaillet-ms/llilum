@@ -648,13 +648,28 @@ extern "C"
 
     LLVMMetadataRef LLVMDILocation( LLVMContextRef context, unsigned Line, unsigned Column, LLVMMetadataRef scope, LLVMMetadataRef InlinedAt )
     {
-        DILocation* pLoc = DILocation::get( *unwrap( context )
-                                          , Line
-                                          , Column
-                                          , unwrap<DILocalScope>( scope )
-                                          , InlinedAt ? unwrap<DILocation>( InlinedAt ) : nullptr
-                                          );
-        return wrap( pLoc );
+        DILocation* inlinedAtLocation = InlinedAt ? unwrap<DILocation>( InlinedAt ) : nullptr;
+        DILocation* pRetVal;
+        if( inlinedAtLocation == nullptr )
+        {
+            pRetVal = DILocation::get( *unwrap( context )
+                                    , Line
+                                    , Column
+                                    , unwrap<DILocalScope>( scope )
+                                    , nullptr
+                                    );
+        }
+        else
+        {
+            pRetVal = DILocation::getDistinct( *unwrap( context )
+                                               , Line
+                                               , Column
+                                               , unwrap<DILocalScope>( scope )
+                                               , inlinedAtLocation
+                                               );
+        }
+
+        return wrap( pRetVal );
     }
 
     LLVMBool LLVMSubProgramDescribes( LLVMMetadataRef subProgram, LLVMValueRef /*const Function **/F )

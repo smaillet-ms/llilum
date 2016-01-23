@@ -429,7 +429,9 @@ namespace Microsoft.Zelig.CodeGeneration.IR
 
         private void ProcessInstruction( Instruction instr )
         {
-            switch(instr.Operator.Action)
+            instr.DebugInfo.Scope = m_cfg.Method;
+            instr.DebugInfo.MethodName = m_cfg.Method.FullyQualifiedName;
+            switch (instr.Operator.Action)
             {
                 case Instruction.OpcodeAction.Load:
                     ProcessInstruction_Load( instr );

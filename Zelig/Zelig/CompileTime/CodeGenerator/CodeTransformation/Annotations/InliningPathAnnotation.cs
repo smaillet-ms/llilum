@@ -25,6 +25,8 @@ namespace Microsoft.Zelig.CodeGeneration.IR
         private InliningPathAnnotation( MethodRepresentation[] path, Debugging.DebugInfo[] debugInfoPath )
         {
             Debug.Assert(path.Length == debugInfoPath.Length);
+            Debug.Assert(path.Length != 0);
+
             m_path = path;
             m_DebugInfo = debugInfoPath;
         }
@@ -130,6 +132,7 @@ namespace Microsoft.Zelig.CodeGeneration.IR
                         m_path = ArrayUtility.RemoveAtPositionFromNotNullArray(m_path, i);
                         m_DebugInfo = ArrayUtility.RemoveAtPositionFromNotNullArray(m_DebugInfo, i);
                         IsSquashed = true;
+
                     }
                 }
             }
@@ -140,6 +143,8 @@ namespace Microsoft.Zelig.CodeGeneration.IR
             }
 
             context.Pop();
+            Debug.Assert(m_path.Length == m_DebugInfo.Length);
+            Debug.Assert(m_path.Length != 0 || IsSquashed);
         }
 
         //--//

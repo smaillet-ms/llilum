@@ -48,12 +48,12 @@ namespace Microsoft.Zelig.LLVM
             var debugInfo = Module.Manager.GetDebugInfoFor(expression.DebugName.Context);
             var expressionScope = Module.Manager.GetScopeFor(expression.DebugName.Context);
 
-            DILocation symbolLocation = debugInfo.AsDILocation(expressionScope);
+            DILocation symbolLocation = debugInfo.AsDILocation(Module);
             DILocation valueLocation = symbolLocation;
             if (expression.InliningPath != null)
             {
                 // build inlined chain of locations with this block's owner as the outermost scope
-                valueLocation = expression.InliningPath.GetDebugLocationFor(Module, Owner.LlvmFunction, debugInfo);
+                valueLocation = expression.InliningPath.GetDebugLocationFor(Module, Owner, debugInfo);
             }
 
             Debug.Assert(valueLocation.InlinedAtScope == null || valueLocation.InlinedAtScope.SubProgram.Describes(Owner.LlvmFunction));
@@ -291,7 +291,12 @@ namespace Microsoft.Zelig.LLVM
                 throw new ArgumentNullException(nameof(op));
 
             var annotation = op.GetAnnotation<IR.InliningPathAnnotation>();
-            CurDILocation = annotation?.GetDebugLocationFor( Module, Owner.LlvmFunction, op.DebugInfo );
+            if( annotation != null )
+                CurDILocation = annotation.GetDebugLocationFor( Module, Owner, op.DebugInfo );
+            else
+            {
+                CurDILocation = op.DebugInfo.AsDILocation(Module);
+            }
         }
 
         public void EndOperator()
