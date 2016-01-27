@@ -3,7 +3,7 @@
 //
 
 //#define GENERATE_ONLY_TYPESYSTEM_AND_FUNCTION_DEFINITIONS
-#define ENABLE_INLINE_DEBUG_INFO
+//#define ENABLE_INLINE_DEBUG_INFO
 
 namespace Microsoft.Zelig.Configuration.Environment.Abstractions.Architectures
 {

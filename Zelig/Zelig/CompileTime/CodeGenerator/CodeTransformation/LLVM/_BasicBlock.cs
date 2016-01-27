@@ -1,4 +1,4 @@
-﻿#define ENABLE_INLINE_DEBUG_INFO
+﻿//#define ENABLE_INLINE_DEBUG_INFO
 using Llvm.NET;
 using Llvm.NET.DebugInfo;
 using Llvm.NET.Instructions;

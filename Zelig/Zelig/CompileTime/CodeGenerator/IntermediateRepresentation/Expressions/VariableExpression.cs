@@ -1,4 +1,4 @@
-#define ENABLE_INLINE_DEBUG_INFO
+//#define ENABLE_INLINE_DEBUG_INFO
 //
 // Copyright (c) Microsoft Corporation.    All rights reserved.
 //
