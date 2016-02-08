@@ -10,8 +10,12 @@
     <OutputName>LlilumSDK</OutputName>
     <OutputType>Package</OutputType>
     <LlilumRoot>$(LLILUM_ROOT)</LlilumRoot>
+    <!-- ZELIG: Move intermediate data out of the source tree -->
+    <BaseIntermediateOutputPath>$(LlilumBuildRoot)\Host\obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+
     <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' AND '$(MSBuildExtensionsPath32)' != '' ">$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\Wix.targets</WixTargetsPath>
     <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' ">$(MSBuildExtensionsPath)\Microsoft\WiX\v3.x\Wix.targets</WixTargetsPath>
+      
     <WixVariables>LlilumRoot=$(LlilumRoot)</WixVariables>
     <WixVariables>$(WixVariables);CpsBuildSourceDir=$(LlilumRoot)\VisualStudio\LlilumApplicationType</WixVariables>
     <WixVariables>$(WixVariables);LlilumTargetBuildOutput=$(LlilumRoot)\Zelig\ZeligBuild\Target\bin\$(Configuration)</WixVariables>
@@ -35,16 +39,14 @@
     <Name>LlilumSDK</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
-    <OutputPath>bin\$(Configuration)\</OutputPath>
-    <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
     <DefineConstants>Debug;RegAndFolderShortVersionString=v1.0</DefineConstants>
     <WixVariables>$(WixVariables);WixUILicenseRtf=$(MSBuildThisFileDirectory)\LlilumSDKLic.rtf</WixVariables>
+    <OutputPath>$(LlilumBuildRoot)\Host\bin\$(Configuration)\</OutputPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
-    <OutputPath>bin\$(Configuration)\</OutputPath>
-    <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
     <DefineConstants>RegAndFolderShortVersionString=v1.0</DefineConstants>
     <WixVariables>$(WixVariables);WixUILicenseRtf=$(MSBuildThisFileDirectory)\LlilumSDKLic.rtf</WixVariables>
+    <OutputPath>$(LlilumBuildRoot)\Host\bin\$(Configuration)\</OutputPath>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Directories.wxs" />
