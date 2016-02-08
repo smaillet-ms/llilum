@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Product Id="*"
+             Name="Llilum SDK $(var.RegAndFolderShortVersionString)"
+             Language="1033"
+             Version="1.0.0.0"
+             Manufacturer="Microsoft"
+             UpgradeCode="27ae55c8-ef09-4f96-8013-aec9e1e61165"
+             >
+        <Package InstallerVersion="405" Compressed="yes" InstallScope="perMachine" />
+
+        <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+        <MediaTemplate EmbedCab="yes" />
+        
+        <PropertyRef Id="VS2015_IDE_VCSHARP_PROJECTSYSTEM_INSTALLED"/>
+        <PropertyRef Id="VS2015_IDE_VC_PROJECTSYSTEM_INSTALLED"/>
+
+        <Condition Message="Visual Studio 2015 with C# project system is required">
+            Installed OR VS2015_IDE_VCSHARP_PROJECTSYSTEM_INSTALLED
+        </Condition>
+        <Condition Message="Visual Studio 2015 with C++ project system is required">
+            Installed OR VS2015_IDE_VC_PROJECTSYSTEM_INSTALLED
+        </Condition>
+
+        <Feature Id="ProductFeature" Title="Llilum SDK" Level="1">
+            <ComponentGroupRef Id="ReferenceAssembliesComponentGroup" />
+            <ComponentGroupRef Id="CpsProjectSystemComponentGroup"/>
+            <ComponentGroupRef Id="ToolsBinComponentGroup"/>
+            <ComponentGroupRef Id="ZeligTestComponentGroup"/>
+            <ComponentGroupRef Id="NativeOsLayerComponentGroup"/>
+            <ComponentGroupRef Id="NativelWipComponentGroup"/>
+            <!--
+            Third party headers, libs and tools.
+            Any additions to these should include an additional entry 
+            in the LlilumSDKLic.rtf license file so that users are
+            fully informed of all copyrights, etc...
+            -->
+            <ComponentGroupRef Id="NativeMbedLibComponentGroup"/>
+            <ComponentGroupRef Id="ThirdPartyToolsComponentGroup"/>
+            <ComponentGroupRef Id="LlvmToolsComponentGroup"/>
+        </Feature>
+
+        <UIRef Id="WixUI_Minimal" />
+    </Product>
+</Wix>

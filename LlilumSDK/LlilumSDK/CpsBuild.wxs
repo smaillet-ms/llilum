@@ -1,0 +1,83 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Fragment>
+        <!-- Place all the contents of the "Rules" folder into a single group -->
+        <ComponentGroup Id="CpsProjectSystemRulesComponentGroup" Directory="llcxProjectApplicationTypeRulesDir" Source="!(wix.CpsBuildSourceDir)\Rules" >
+            <Component Guid="*">
+                <File KeyPath="yes" Name="ResolvedAssemblyReference.xaml" />
+            </Component>
+            <Component Guid="*"  >
+                <File KeyPath="yes" Name="resolvedsdkreference.xaml" />
+            </Component>
+            <Component Guid="*">
+                <File KeyPath="yes" Name="folder.xaml" />
+            </Component>
+            <Component Guid="*">
+                <File KeyPath="yes" Name="ResolvedProjectReference.xaml" />
+            </Component>
+            <Component Guid="*">
+                <File  KeyPath="yes" Name="general.xaml" />
+            </Component>
+            <Component Guid="*">
+                <File KeyPath="yes" Name="none.xaml" />
+            </Component>
+            <Component  Guid="*">
+                <File KeyPath="yes" Name="debugger_general.xaml" />
+            </Component>
+            <Component Guid="*">
+                <File KeyPath="yes" Name="csharp.browseobject.xaml" />
+            </Component>
+            <Component Guid="*">
+                <File  KeyPath="yes" Name="ResolvedCOMReference.xaml" />
+            </Component>
+            <Component Guid="*">
+                <File KeyPath="yes" Name="CustomPropertyPage.xaml" />
+            </Component>
+            <Component Guid="*">
+                <File KeyPath="yes" Name="EmbeddedResource.xaml" />
+            </Component>
+            <Component Guid="*">
+                <File KeyPath="yes" Name="general.browseobject.xaml" />
+            </Component>
+            <Component Guid="*">
+                <File KeyPath="yes" Name="projectreference.xaml" />
+            </Component>
+            <Component Guid="*">
+                <File KeyPath="yes" Name="scc.xaml" />
+            </Component>
+            <Component Guid="*">
+                <File KeyPath="yes" Name="comreference.xaml" />
+            </Component>
+            <Component Guid="*">
+                <File KeyPath="yes" Name="assemblyreference.xaml" />
+            </Component>
+            <Component Guid="*">
+                <File KeyPath="yes" Name="csharp.xaml" />
+            </Component>
+            <Component Guid="*">
+                <File KeyPath="yes" Name="sdkreference.xaml" />
+            </Component>
+            <Component Guid="*">
+                <File KeyPath="yes" Name="general_file.xaml" />
+            </Component>
+            <Component Guid="*">
+                <File KeyPath="yes" Name="ProjectItemsSchema.xaml" />
+            </Component>
+        </ComponentGroup>
+        <ComponentGroup Id="CpsProjectSystemComponentGroup" Directory="llcsProjectApplicationTypeVersionDir" Source="!(wix.CpsBuildSourceDir)">
+            <ComponentGroupRef Id="CpsProjectSystemRulesComponentGroup"/>
+            <Component Guid="*">
+                <File KeyPath="yes" Name="CustomProject.targets" />
+            </Component>
+            <Component Guid="*">
+                <File KeyPath="yes" Name="CustomProject.props" />
+            </Component>
+            <Component  Guid="*">
+                <File KeyPath="yes" Name="CustomProjectCs.targets" />
+            </Component>
+            <Component Guid="*">
+                <File KeyPath="yes" Name="CustomProject.Default.props" />
+            </Component>
+        </ComponentGroup>
+    </Fragment>
+</Wix>
