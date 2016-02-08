@@ -66,7 +66,7 @@ it for the changes to take effect.
                 <DirectoryRefId>CpsApplicationTypeFolder</DirectoryRefId>
                 <!--
                 Need to transform this to mark the executable's MSI components as 32bit
-                Otherwsie the MSI Internal Consistency Error checks (effectively FxCop for an MSI)
+                Otherwise the MSI Internal Consistency Error checks (effectively FxCop for an MSI)
                 will trigger an error since a 64 bit component is being instaled into a 32 bit location
                 -->
                 <Transforms>MarkComponentsWin32.xslt</Transforms>
