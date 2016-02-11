@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Description:
+  This propertysheet project file defines the Llilum build system properties and settings
+  for this BSP as a NUGET package.
+-->
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup>
+    <!--
+    Nuget only auto imports the props files matching the package name (Without version) so only this file is auto imported
+    The project templates for native code inlude a conditional import for a property sheet using this property as the 
+    condition and path to the property sheet. The reason for this convolved approach is due to the necessity to achieve 
+    proper import ordering of the property sheet. Since NUGET will place imports at the beginning of the project file,
+    before other imports the ItemDefinition groups would be overridden by the default settings in the general build
+    infrastucture if they were included in this file. However, if they are imported at the expected PropertySheet
+    extensibility point everything works as expected.
+    -->
+    <LlilumBspPropertySheet>$(MSBuildThisFileDirectory)\$(MSBuildThisFileName).PropertySheet.props</LlilumBspPropertySheet>
+  </PropertyGroup>
+</Project>

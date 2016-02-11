@@ -1,0 +1,76 @@
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), BuildEnv.props))\BuildEnv.props" Condition="Exists('$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), BuildEnv.props))\BuildEnv.props')" />
+    <!--
+    # Inline task to set the buildNumber for use in creating an MSBuild property
+    # to use as a preprocessor define.
+    #
+    # For details on the general algorithm used for computing the numbers here see:
+    # https://msdn.microsoft.com/en-us/library/system.reflection.assemblyversionattribute.assemblyversionattribute(v=vs.110).aspx 
+    #
+    -->
+    <UsingTask
+    TaskName="GenerateBuildNumbers"
+    TaskFactory="CodeTaskFactory"
+    AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll" >
+        <ParameterGroup>
+            <BuildNumber ParameterType="System.Int32" Output="true"/>
+            <BuildRevision ParameterType="System.Int32" Output="true"/>
+        </ParameterGroup>
+        <Task>
+            <Using Namespace="System"/>
+            <Using Namespace="System.IO"/>
+            <Code Type="Fragment" Language="cs">
+                <![CDATA[
+                var now = DateTime.Now;
+                var midnightTodayUtc = new DateTime( now.Year, now.Month, now.Day, 0, 0, 0, DateTimeKind.Utc);
+                var baseDate = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+                BuildNumber = (int)(now  - baseDate).Days;
+                BuildRevision = (int)(((now - midnightTodayUtc).TotalSeconds) / 2);
+            ]]>
+            </Code>
+        </Task>
+    </UsingTask>
+
+    <PropertyGroup>
+        <HostBinPath Condition="'$(SignedBuild)'!='true'">$(LlilumBuildRoot)\Host\bin\$(Configuration)\</HostBinPath>
+        <TargetBinPath Condition="'$(SignedBuild)'!='true'">$(LlilumBuildRoot)\Target\bin\$(Configuration)\</TargetBinPath>
+        <HostBinPath Condition="'$(SignedBuild)'=='true'">$(LlilumSignedBuildRoot)\Host\bin\$(Configuration)\</HostBinPath>
+        <TargetBinPath Condition="'$(SignedBuild)'=='true'">$(LlilumSignedBuildRoot)\Target\bin\$(Configuration)\</TargetBinPath>
+        <NugetExe>$(LLILUM_ROOT)\Zelig\Tools\nuget.exe</NugetExe>
+    </PropertyGroup>
+    
+    <ItemGroup>
+        <!--
+        Multiple nuspec files may be listed here although this sample only illustrates the most common case of one
+        NuSpec Items should include the following metadata:
+            BuildMajor - Major portion of the standard version number quad
+            BuildMinor - Minor portion of the standard version number quad
+            Properties - Semicolon delimited list of property=value pairs for substitutions in the nuspec file
+            BuildSemanticVersionSuffix -  [Optional] suffix string for a semantic version number (i.e. -alpha)
+        -->
+        <NuSpec Include="mbed.LPC1768.BSP.nuspec">
+            <BuildMajor>1</BuildMajor>
+            <BuildMinor>0</BuildMinor>
+            <BuildSemanticVersionSuffix>-alpha</BuildSemanticVersionSuffix>
+            <Properties>HostBinPath=$(HostBinPath);TargetBinPath=$(TargetBinPath)</Properties>
+        </NuSpec>
+    </ItemGroup>
+
+    <!-- This target uses the inline task defined above to generate Build and revision portions of a standard version quad -->
+    <Target Name="CreateBuildNumbers">
+        <GenerateBuildNumbers Condition="'$(AutoGenerateBuildNumbers)'!='false'">
+            <Output PropertyName="BuildNumber" TaskParameter="BuildNumber" />
+            <Output PropertyName="BuildRevision" TaskParameter="BuildRevision" />
+        </GenerateBuildNumbers>
+        <Message Importance="high" Text="BuildNumber=$(BuildNumber)"/>
+        <Message Importance="high" Text="BuildRevision=$(BuildRevision)"/>
+    </Target>
+
+    <Target Name="NugetPack" DependsOnTargets="CreateBuildNumbers" Inputs="@(NuSpec)" Outputs="$(HostBinPath)%(FileName).%(BuildMajor).%(BuildMinor).$(BuildNumber).$(BuildRevision)%(NuSpec.BuildSemanticVersionSuffix).nupkg">
+        <Exec Command="$(NugetExe) pack %(NuSpec.FullPath) -NoPackageAnalysis -OutputDirectory $(HostBinPath) -Properties %(Properties);BuildVersion=%(BuildMajor).%(BuildMinor).$(BuildNumber).$(BuildRevision)%(NuSpec.BuildSemanticVersionSuffix)"
+              Outputs="$(HostBinPath)%(FileName).%(BuildMajor).%(BuildMinor).$(BuildNumber).$(BuildRevision)%(NuSpec.BuildSemanticVersionSuffix).nupkg"
+              />
+    </Target>
+
+    <Target Name="Build" DependsOnTargets="NugetPack"/>
+</Project>

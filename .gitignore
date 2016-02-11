@@ -60,6 +60,8 @@ bld/
 *.bc
 *.ll
 
+!samples/BspNugetPackages/**/build
+
 # Visual Studo 2015 cache/options directory
 .vs/
 

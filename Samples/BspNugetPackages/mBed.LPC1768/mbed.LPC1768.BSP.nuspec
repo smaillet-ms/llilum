@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <!--
+    Description:
+       Nuget package specification for the Llilum BSP for the Mbed LPC1768 development board.
+    
+    Input Properties:
+        BuildVersion  - Version number for the NUGET Package (See NUGET documentation for details of supported syntax)
+        HostBinPath   - Root Location to get the Host side binaries to include in the package (Normally this is the ZeligBuild location for unsigned files but may be an alternate in the case of signed binaries )
+        TargetBinPath - Root Location to get the Target side binaris to include in the package (Normally this is the ZeligBuild location for unsigned files but may be an alternate in the case of signed binaries )
+        
+    Example Usage:
+        nuget.exe pack Mbed.LPC1768.BSP.nuspec -OutputDirectory $(OutDir) -Properties BuildVersion=1.0.0-pre;HostBinPath=$(ZeligBuild)\Host\bin\$(Configuration);TargetBinPath=$(ZeligBuild)\Target\bin\$(Configuration)
+    -->
+    <metadata>
+        <id>Mbed.LPC1768.BSP</id>
+        <version>$BuildVersion$</version>
+        <title>Mbed.LPC1768.BSP</title>
+        <authors>Microsoft</authors>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>Llilum BSP for the MBED LPC1768 module</description>
+        <summary>Llilum BSP for the MBED LPC1768 module</summary>
+    </metadata>
+    <files>
+        <file src="build\Mbed.LPC1768.BSP.PropertySheet.props" target="build\Mbed.LPC1768.BSP.PropertySheet.props" />
+        <file src="build\Mbed.LPC1768.BSP.props" target="build\Mbed.LPC1768.BSP.props" />
+        <file src="$HostBinPath$Microsoft.Llilum.BoardConfigurations.LPC1768.dll" target="CompilationSetup\Microsoft.Llilum.BoardConfigurations.LPC1768.dll" />
+        <file src="$TargetBinPath$LPC1768.dll" target="lib\Llilum10\LPC1768.dll" />
+    </files>
+</package>

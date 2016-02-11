@@ -1,0 +1,108 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+Description:
+  This propertysheet project file defines the Llilum build system properties and settings
+  for the mBed.LPC1768 development platform with mBed 2.x libraries. It is added to a project
+  as a NUGET package.
+-->
+
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- This group sets properties needed for this particular hardware/software platform -->
+  <PropertyGroup>
+    <!-- Compilation setup is the host side DLL containing Attributed classes to describe aspects of the hardware to the compilation -->
+    <LlilumCompilationSetup>$(MSBuildThisFileDirectory)\..\CompilationSetup\Microsoft.Llilum.BoardConfigurations.LPC1768.dll</LlilumCompilationSetup>
+    <LlilumTargetDir>$(LlilumSDK)mbed\</LlilumTargetDir>
+    <LlilumTargetBoard>TARGET_LPC1768</LlilumTargetBoard>
+    <LlilumTargetBrand>TARGET_NXP</LlilumTargetBrand>
+    <LlilumTargetToolchain>TOOLCHAIN_GCC_ARM</LlilumTargetToolchain>
+    <LlilumTargetClass>TARGET_LPC176X</LlilumTargetClass>
+    <LlilumTargetBoardMbed>TARGET_MBED_LPC1768</LlilumTargetBoardMbed>
+    <LlilumTargetBoardArchitecture>cortex-m3</LlilumTargetBoardArchitecture>
+    <LlilumStackSize>0x800</LlilumStackSize>
+    <LlilumHeapSize>0x6A00</LlilumHeapSize>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'" >
+    <LlilumStackSize>0xC00</LlilumStackSize>
+  </PropertyGroup>
+
+  <!-- 
+  Standard includes for LWip on mbed-rtos API (implemented by Llilum runtime )
+  For mBed LPC1768 this is only used to find EthernetInterface.h right now as networking isn't fully functional yet.
+  Listing these out on individual lines makes for easier maintenance as diff will highlight changes more readily.
+  Ideally, an ItemGroup would be used, unfortunately the @(foo) syntax isn't allowed in an ItemGroupDefinition.
+  -->
+  <PropertyGroup>
+    <LlilumLwipIncludeDirs>$(LlilumLwipIncludeDirs);$(LlilumTargetDir)EthernetInterface</LlilumLwipIncludeDirs>
+    <LlilumLwipIncludeDirs>$(LlilumLwipIncludeDirs);$(LlilumSDK)lwip\lwip;$(LlilumSDK)lwip\lwip\include</LlilumLwipIncludeDirs>
+    <LlilumLwipIncludeDirs>$(LlilumLwipIncludeDirs);$(LlilumSDK)lwip\lwip\include\ipv4</LlilumLwipIncludeDirs>
+    <LlilumLwipIncludeDirs>$(LlilumLwipIncludeDirs);$(LlilumSDK)lwip\lwip\include\ipv4\lwip</LlilumLwipIncludeDirs>
+    <LlilumLwipIncludeDirs>$(LlilumLwipIncludeDirs);$(LlilumSDK)lwip\lwip\include\lwip</LlilumLwipIncludeDirs>
+    <LlilumLwipIncludeDirs>$(LlilumLwipIncludeDirs);$(LlilumSDK)lwip\lwip\include\netif</LlilumLwipIncludeDirs>
+    <LlilumLwipIncludeDirs>$(LlilumLwipIncludeDirs);$(LlilumSDK)lwip\lwip\netif</LlilumLwipIncludeDirs>
+    <LlilumLwipIncludeDirs>$(LlilumLwipIncludeDirs);$(LlilumSDK)lwip\lwip\netif\ppp</LlilumLwipIncludeDirs>
+    <LlilumLwipIncludeDirs>$(LlilumLwipIncludeDirs);$(LlilumSDK)lwip\lwip\api</LlilumLwipIncludeDirs>
+    <LlilumLwipIncludeDirs>$(LlilumLwipIncludeDirs);$(LlilumSDK)lwip\lwip\core</LlilumLwipIncludeDirs>
+    <LlilumLwipIncludeDirs>$(LlilumLwipIncludeDirs);$(LlilumSDK)lwip\lwip\core\ipv4</LlilumLwipIncludeDirs>
+    <LlilumLwipIncludeDirs>$(LlilumLwipIncludeDirs);$(LlilumSDK)lwip\lwip\core\snmp</LlilumLwipIncludeDirs>
+    <LlilumLwipIncludeDirs>$(LlilumLwipIncludeDirs);$(LlilumSDK)lwip\lwip\core\snmp</LlilumLwipIncludeDirs>
+    <LlilumLwipIncludeDirs>$(LlilumLwipIncludeDirs);$(LlilumSDK)lwip\lwip-eth</LlilumLwipIncludeDirs>
+    <LlilumLwipIncludeDirs>$(LlilumLwipIncludeDirs);$(LlilumSDK)lwip\lwip-eth\arch</LlilumLwipIncludeDirs>
+    <LlilumLwipIncludeDirs>$(LlilumLwipIncludeDirs);$(LlilumSDK)lwip\lwip-sys</LlilumLwipIncludeDirs>
+    <LlilumLwipIncludeDirs>$(LlilumLwipIncludeDirs);$(LlilumSDK)lwip\lwip-sys\arch</LlilumLwipIncludeDirs>
+    <LlilumLwipIncludeDirs>$(LlilumLwipIncludeDirs);$(LlilumSDK)mbed-rtos\llos</LlilumLwipIncludeDirs>
+    <LlilumLwipIncludeDirs>$(LlilumLwipIncludeDirs);$(LlilumSDK)mbed-rtos\llos\TARGET_CORTEX_M</LlilumLwipIncludeDirs>
+    <LlilumLwipIncludeDirs>$(LlilumLwipIncludeDirs);$(LlilumSDK)lwip\lwip-eth\arch\TARGET_NXP</LlilumLwipIncludeDirs>
+  </PropertyGroup>
+
+  <!-- Standard include paths for the OS layer on mbed -->
+  <PropertyGroup>
+    <LlilumOsLayerIncludeDirs>$(LlilumOsLayerIncludeDirs);$(LlilumSDK)os_layer\ports\mbed\inc</LlilumOsLayerIncludeDirs>
+    <LlilumOsLayerIncludeDirs>$(LlilumOsLayerIncludeDirs);$(LlilumSDK)os_layer\inc</LlilumOsLayerIncludeDirs>
+    <LlilumOsLayerIncludeDirs>$(LlilumOsLayerIncludeDirs);$(LlilumSDK)os_layer\inc\api</LlilumOsLayerIncludeDirs>
+    <LlilumOsLayerIncludeDirs>$(LlilumOsLayerIncludeDirs);$(LlilumSDK)os_layer\inc\api\io</LlilumOsLayerIncludeDirs>
+    <LlilumOsLayerIncludeDirs>$(LlilumOsLayerIncludeDirs);$(LlilumSDK)os_layer\inc\hal</LlilumOsLayerIncludeDirs>
+  </PropertyGroup>
+
+  <!--
+  Each element in the definition group establishes default settings for a given build tool. To ensure the
+  settings here don't completely wipe out settings provided in a standard property sheet, the item properties
+  typically end with %([Name of the property]) to include all previously configured settings.
+  
+  NOTE:
+  Although not used here, conditional ItemDefinitionGroups are supported so that different project and solution
+  configurations use different values.  
+  -->
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalOptions>-mcpu=$(LlilumTargetBoardArchitecture) %(AdditionalOptions)</AdditionalOptions>
+      <PreprocessorDefinitions>$(LlilumTargetBoard);$(LlilumTargetBrand);$(LlilumTargetClass);$(LlilumTargetBoardMbed);TARGET_M3;TARGET_CORTEX_M;TOOLCHAIN_GCC_ARM;TOOLCHAIN_GCC;__CORTEX_M3;ARM_MATH_CM3;MBED_BUILD_TIMESTAMP=1435688844.64;__MBED__=1;__DEFAULT_STACK_SIZE=$(LlilumStackSize);__HEAP_SIZE=$(LlilumHeapSize);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(StlIncludeDirectories);$(LlilumOsLayerIncludeDirs);$(LlilumLwipIncludeDirs);$(LlilumTargetDir);$(LlilumTargetDir)$(LlilumTargetBoard);$(LlilumTargetDir)$(LlilumTargetBoard)/$(LlilumTargetToolchain);$(LlilumTargetDir)$(LlilumTargetBoard)/$(LlilumTargetBrand);$(LlilumTargetDir)$(LlilumTargetBoard)/$(LlilumTargetBrand)/$(LlilumTargetClass);$(LlilumTargetDir)$(LlilumTargetBoard)/$(LlilumTargetBrand)/$(LlilumTargetClass)/$(LlilumTargetBoardMbed);$(LlilumSDK)ARM_GCC\arm-none-eabi\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalOptions>-T"$(LlilumTargetDir)$(LlilumTargetBoard)/$(LlilumTargetToolchain)/LPC1768.ld" -Wl,--gc-sections --specs=nano.specs -u _printf_float -u _scanf_float -Wl,--wrap,main %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalDependencies>$(LlilumTargetDir)$(LlilumTargetBoard)/$(LlilumTargetToolchain)/board.o;$(LlilumTargetDir)$(LlilumTargetBoard)/$(LlilumTargetToolchain)/cmsis_nvic.o;$(LlilumTargetDir)$(LlilumTargetBoard)/$(LlilumTargetToolchain)/retarget.o;$(LlilumTargetDir)$(LlilumTargetBoard)/$(LlilumTargetToolchain)/system_LPC17xx.o;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(LlilumTargetDir)$(LlilumTargetBoard)/$(LlilumTargetToolchain);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <!-- LPC1768 Ethernet driver does not work yet, so don't inlude the LwIP libs -->
+      <!-- <LibraryDependencies>mbed;lwip;mbedeth;lwIPeth;lwipsysarch;stdc++;supc++;m;c;gcc;nosys;%(LibraryDependencies)</LibraryDependencies> -->
+      <LibraryDependencies>mbed;stdc++;supc++;m;c;gcc;nosys;%(LibraryDependencies)</LibraryDependencies>
+    </Link>
+    <ArmAssemble>
+      <AdditionalOptions>-Wa,--defsym,__HEAP_SIZE=$(LlilumHeapSize)</AdditionalOptions>
+    </ArmAssemble>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <!--
+    Build macro items establish visibility of the property to the VS property editor under the "User Macros" section
+    and optionally controls visibility of the property as an environemnt variable to the tools during build.
+    
+    The stack and heap sizes are well, known properties that the appear in the "Llilum Configuration" property
+    page for the project to allow end user adjustment of both values depending on the applications needs. 
+    -->
+    <BuildMacro Include="LlilumStackSize">
+      <Value>$(LlilumStackSize)</Value>
+    </BuildMacro>
+    <BuildMacro Include="LlilumHeapSize">
+      <Value>$(LlilumHeapSize)</Value>
+    </BuildMacro>
+  </ItemGroup>
+</Project>
