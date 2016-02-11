@@ -36,12 +36,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="K64F"/>
-    <Reference Include="LPC1768"/>
-    <Reference Include="STM32L152"/>
-    <Reference Include="STM32F091"/>
-    <Reference Include="STM32F411"/>
-    <Reference Include="STM32F401"/>
     <Reference Include="Microsoft.Zelig.Support.mbed"/>
     <Reference Include="Microsoft.Llilum.Lwip" />
     <Reference Include="System" />

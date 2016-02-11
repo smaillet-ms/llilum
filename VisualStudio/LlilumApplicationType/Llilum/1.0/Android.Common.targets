@@ -361,8 +361,8 @@ Copyright (C) Microsoft Corporation. All rights reserved.
            until we add custom command line parsing to the Llilum transformation engine.
       -->
       <IntDirTrimmed>$(IntDir.TrimEnd('\'))</IntDirTrimmed>
-      <CompilationSetup Condition="'$(LlilumBoardSupportPackage)'!=''">-CompilationSetupPath "$(LlilumBoardSupportPackage)"</CompilationSetup>
-      <CompilationSetup Condition="'$(LlilumBoardSupportPackage)'=='' AND Exists('$(LlilumSDK)CompilationSetup\Microsoft.Llilum.BoardConfigurations.$(LlilumBoardName).dll')">-CompilationSetupPath "$(LlilumSDK)CompilationSetup\Microsoft.Llilum.BoardConfigurations.$(LlilumBoardName).dll"</CompilationSetup>
+      <CompilationSetup Condition="'$(LlilumCompilationSetup)'!=''">-CompilationSetupPath "$(LlilumCompilationSetup)"</CompilationSetup>
+      <CompilationSetup Condition="'$(LlilumCompilationSetup)'=='' AND Exists('$(LlilumSDK)CompilationSetup\Microsoft.Llilum.BoardConfigurations.$(LlilumBoardName).dll')">-CompilationSetupPath "$(LlilumSDK)CompilationSetup\Microsoft.Llilum.BoardConfigurations.$(LlilumBoardName).dll"</CompilationSetup>
     </PropertyGroup>
     <Exec Command='echo Generating native code for "@(ReferencePath)"' />
     <Exec Command='"$(LlilumCompiler)" $(CompilationSetup) -cfg "$(LlilumConfig)" "@(ReferencePath)" -OutputName "%(ReferencePath.Filename)" -OutputDir "$(IntDirTrimmed)" -HostAssemblyDir "$(LlilumSDK)\bin" -DeviceAssemblyDir "$(MSBuildProgramFiles32)\Reference Assemblies\Microsoft\Framework\Llilum\v1.0"' />
